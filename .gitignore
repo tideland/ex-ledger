@@ -1,0 +1,100 @@
+# The directory Mix will write compiled artifacts to.
+/_build/
+
+# If you run "mix test --cover", coverage assets end up here.
+/cover/
+
+# The directory Mix downloads your dependencies sources to.
+/deps/
+
+# Where third-party dependencies like ExDoc output generated docs.
+# (We keep our own doc/ directory with markdown files)
+
+# Ignore .fetch files in case you like to edit your project deps locally.
+/.fetch
+
+# If the VM crashes, it generates a dump, let's ignore it too.
+erl_crash.dump
+
+# Also ignore archive artifacts (built via "mix archive.build").
+*.ez
+
+# Ignore package tarball (built via "mix hex.build").
+tideland_ledger-*.tar
+
+# Temporary files, for example, from tests.
+/tmp/
+
+# Ignore assets that are produced by build tools.
+/priv/static/assets/
+
+# Ignore digested assets cache.
+/priv/static/cache_manifest.json
+
+# In case you use Node.js/npm, you want to ignore these.
+npm-debug.log
+/node_modules/
+
+# Database files
+*.db
+*.db-shm
+*.db-wal
+*.sqlite
+*.sqlite3
+*.sqlite-shm
+*.sqlite-wal
+
+# Environment variables
+.env
+.env.*
+
+# IDE and editor files
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Elixir Language Server
+/.elixir_ls/
+
+# Phoenix specific
+/config/*.secret.exs
+/config/runtime.exs
+/rel/
+
+# Static assets - only if using webpack or similar
+/assets/node_modules/
+
+# Uploaded files
+/uploads/
+
+# Log files
+/log/
+*.log
+
+# Test coverage
+/cover/
+/coverage/
+
+# Documentation build output (from mix docs)
+# Only ignore the generated docs, not our doc/ directory
+/docs/
+
+# Backup files
+*.bak
+*.backup
+*.old
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# TOML configuration files with secrets
+*.secret.toml
+config.local.toml
+
+# Development database
+/priv/repo/*.db
+/priv/repo/*.sqlite3

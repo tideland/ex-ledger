@@ -80,23 +80,27 @@ ledger/
 ### Installation
 
 1. Clone the repository:
+
    ```bash
    git clone https://github.com/tideland/ex-ledger.git
    cd ex-ledger
    ```
 
 2. Install dependencies:
+
    ```bash
    mix deps.get
    ```
 
 3. Create and migrate the database:
+
    ```bash
    mix ecto.create
    mix ecto.migrate
    ```
 
 4. Configure the application:
+
    ```bash
    cp config/config.example.toml config/config.toml
    # Edit config/config.toml with your settings
@@ -112,17 +116,20 @@ Now you can visit [`localhost:4000`](http://localhost:4000) from your browser.
 ### Development Setup
 
 1. Install development dependencies:
+
    ```bash
    mix deps.get
    mix compile
    ```
 
 2. Run tests:
+
    ```bash
    mix test
    ```
 
 3. Run the linter:
+
    ```bash
    mix credo
    ```
@@ -213,6 +220,7 @@ mix ecto.reset
 5. Open a Pull Request
 
 Please ensure:
+
 - All tests pass
 - Code follows the project style guide
 - Documentation is updated
@@ -220,7 +228,7 @@ Please ensure:
 
 ## License
 
-This project is licensed under the MIT License - see the LICENSE file for details.
+This project is licensed under the BSD 3-Clause License - see the LICENSE file for details.
 
 ## Acknowledgments
 
@@ -231,6 +239,7 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 ## Support
 
 For questions and support:
+
 - Open an issue on GitHub
 - Check the documentation in `/doc`
 - Review the test cases for usage examples

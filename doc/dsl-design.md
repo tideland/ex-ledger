@@ -78,11 +78,11 @@ Date.parse("2024-01-15") = 2024-01-15
 ### 2.3 Account Path
 
 ```
+# Account paths using codes and names
 AccountPath = String with " : " delimiter
-AccountPath.parse("Assets : Bank : Checking") = valid
-AccountPath.parent("Assets : Bank : Checking") = "Assets : Bank"
-AccountPath.name("Assets : Bank : Checking") = "Checking"
-AccountPath.type("Assets : Bank : Checking") = Asset
+AccountPath.parse("1000 : 1200 : Checking") = valid
+AccountPath.parent("1000 : 1200 : Checking") = "1000 : 1200"
+AccountPath.name("1000 : 1200 : Checking") = "Checking"
 ```
 
 ## 4. Account Definition DSL
@@ -90,14 +90,15 @@ AccountPath.type("Assets : Bank : Checking") = Asset
 ### 3.1 Basic Account Definition
 
 ```
-define_account "Assets : Bank : Checking" do
-  type: Asset
+# Basic account definition
+define_account "1200" do
+  name: "Bank - Checking"
   description: "Main business checking account"
   active: true
 end
 
-define_account "Expenses : Office : Rent" do
-  type: Expense
+define_account "4200" do
+  name: "Office Rent"
   description: "Monthly office rent"
   active: true
 end
@@ -106,35 +107,31 @@ end
 ### 3.2 Bulk Account Definition
 
 ```
+# Hierarchical account structure using code ranges
 define_accounts do
-  group "Assets" do
-    group "Current Assets" do
-      account "Cash"
-      account "Petty Cash"
-      group "Bank" do
-        account "Checking" with description: "Main account"
-        account "Savings" with description: "Reserve funds"
-      end
-    end
-    group "Fixed Assets" do
-      account "Equipment"
-      account "Vehicles"
+  # Using SKR03-style numbering
+  group "1000-1999" do  # Bank accounts and cash
+    account "1000" with name: "Cash", description: "Cash on hand"
+    account "1001" with name: "Petty Cash", description: "Petty cash fund"
+    group "1200-1299" do  # Bank accounts
+      account "1200" with name: "Bank - Checking", description: "Main account"
+      account "1210" with name: "Bank - Savings", description: "Reserve funds"
     end
   end
 
-  group "Liabilities" do
-    group "Current Liabilities" do
-      account "Accounts Payable"
-      account "Credit Card"
-    end
+  group "0400-0999" do  # Fixed assets
+    account "0620" with name: "Equipment", description: "Office equipment"
+    account "0650" with name: "Furniture", description: "Office furniture"
   end
 
-  group "Expenses" do
-    group "Operating" do
-      account "Rent"
-      account "Utilities"
-      account "Salaries"
-    end
+  group "3000-3999" do  # Liabilities
+    account "3000" with name: "Accounts Payable", description: "Trade creditors"
+    account "3100" with name: "Credit Card Payable", description: "Credit card liabilities"
+  end
+
+  group "4000-4999" do  # Operating expenses
+    account "4200" with name: "Rent", description: "Office rent"
+    account "4300" with name: "Utilities", description: "Electricity, water, etc."
   end
 end
 ```
@@ -144,12 +141,13 @@ end
 ### 4.1 Simple Transaction
 
 ```
+# Simple double-entry syntax - using account codes
 transaction do
   date: 2024-01-15
   description: "Purchase office supplies"
 
-  debit  "Expenses : Office : Supplies", Amount.new(50.00)
-  credit "Assets : Bank : Checking", Amount.new(50.00)
+  debit  "4100", Amount.new(50.00)  # Office Supplies
+  credit "1200", Amount.new(50.00)  # Bank - Checking
 end
 
 # Or with implicit conversion
@@ -157,54 +155,57 @@ transaction do
   date: 2024-01-15
   description: "Purchase office supplies"
 
-  debit  "Expenses : Office : Supplies", 50.00
-  credit "Assets : Bank : Checking", 50.00
+  debit  "4100", 50.00  # Office Supplies
+  credit "1200", 50.00  # Bank - Checking
 end
 ```
 
 ### 4.2 Using Position Syntax
 
 ```
+# Position-based syntax (positive/negative amounts)
 transaction do
   date: 2024-01-15
   description: "Purchase office supplies"
 
-  position "Expenses : Office : Supplies", +50.00
-  position "Assets : Bank : Checking", -50.00
+  position "4100", +50.00  # Office Supplies
+  position "1200", -50.00  # Bank - Checking
 end
 ```
 
 ### 4.3 Multi-Position Transaction
 
 ```
+# Multi-position transaction
 transaction do
   date: 2024-01-20
   description: "Client payment with fees"
 
-  position "Assets : Bank : Checking", +970.00
-  position "Expenses : Bank Fees", +30.00
-  position "Assets : Accounts Receivable", -1000.00
+  position "1200", +970.00   # Bank - Checking
+  position "4900", +30.00    # Bank Fees
+  position "1400", -1000.00  # Accounts Receivable
 end
 ```
 
 ### 4.4 Tax-Relevant Positions
 
 ```
+# Tax relevance tagging
 transaction do
   date: 2024-02-01
   description: "Craftsman invoice - renovation"
 
-  position "Expenses : Renovation : Labor", +800.00 do
+  position "4500", +800.00 do  # Renovation Labor
     tax_relevant: true
     memo: "Deductible craftsman services"
   end
 
-  position "Expenses : Renovation : Materials", +200.00 do
+  position "4510", +200.00 do  # Renovation Materials
     tax_relevant: false
     memo: "Non-deductible materials"
   end
 
-  position "Assets : Bank : Checking", -1000.00
+  position "1200", -1000.00  # Bank - Checking
 end
 ```
 
@@ -213,55 +214,59 @@ end
 ### 5.1 Fixed Amount Template
 
 ```
+# Fixed amount template
 template "Monthly Rent" do
   default_total: 1500.00
   validate_accounts: true
 
-  position "Expenses : Office : Rent", +1500.00
-  position "Assets : Bank : Checking", -1500.00
+  position "4200", +1500.00  # Office Rent
+  position "1200", -1500.00  # Bank - Checking
 end
 ```
 
 ### 5.2 Variable Amount Template
 
 ```
+# Template with parameter
 template "Office Supplies Purchase" do
   parameter :amount  # Can be Amount or numeric
   validate_accounts: true
 
-  position "Expenses : Office : Supplies", +amount
-  position "Assets : Bank : Checking", -amount
+  position "4100", +amount  # Office Supplies
+  position "1200", -amount  # Bank - Checking
 end
 ```
 
 ### 5.3 Fraction-Based Template (Standard Approach)
 
 ```
+# Template with fractions (percentage-based distribution)
 template "Monthly Rent with Utilities" do
   parameter :total_amount  # Amount type
   default_total: 2000.00
   validate_accounts: true
 
   # Using fractions as the standard approach
-  position "Expenses : Office : Rent", fraction: 0.80
-  position "Expenses : Office : Utilities", fraction: 0.15
-  position "Expenses : Office : Maintenance", fraction: 0.05
-  position "Assets : Bank : Checking", fraction: -1.00
+  position "4200", fraction: 0.80   # Office Rent
+  position "4300", fraction: 0.15   # Utilities
+  position "4400", fraction: 0.05   # Maintenance
+  position "1200", fraction: -1.00  # Bank - Checking
 end
 ```
 
 ### 5.4 Complex Template with Distribution
 
 ```
+# Template with automatic distribution
 template "Split Invoice Three Ways" do
   parameter :amount
   parameter :account_from
   validate_accounts: true
 
   # Automatic distribution using fractions
-  position "Expenses : Shared : Partner A", fraction: 1/3
-  position "Expenses : Shared : Partner B", fraction: 1/3
-  position "Expenses : Shared : Partner C", fraction: 1/3
+  position "4801", fraction: 1/3  # Partner A Share
+  position "4802", fraction: 1/3  # Partner B Share
+  position "4803", fraction: 1/3  # Partner C Share
   position account_from, fraction: -1.00
 end
 ```
@@ -283,11 +288,12 @@ apply_template "Office Supplies Purchase" do
 end
 
 # Complex template
+# Applying template with all parameters
 apply_template "Split Invoice Three Ways" do
   date: 2024-02-10
   description: "Shared consulting expense"
   amount: 1000.00
-  account_from: "Assets : Bank : Checking"
+  account_from: "1200"  # Bank - Checking
 end
 ```
 
@@ -297,48 +303,47 @@ end
 
 ```
 # Single account balance
-balance_of "Assets : Bank : Checking"
+balance_of "1200"  # Bank - Checking
 => 12,500.00
 
-# Multiple accounts
-balance_of accounts matching "Assets : Bank : *"
-=> {"Assets : Bank : Checking" => 12,500.00,
-    "Assets : Bank : Savings" => 25,000.00}
+# Multiple accounts by code range
+balance_of accounts matching "12*"
+=> {"1200" => 12,500.00,  # Bank - Checking
+    "1210" => 25,000.00}  # Bank - Savings
 
 # Balance at specific date
-balance_of "Assets : Bank : Checking" at: 2024-01-31
-=> 11,200.00
+balance_of "1200" at: 2024-01-31
+=> 8,200.00
 ```
 
 ### 6.2 Transaction Queries
 
 ```
 # All transactions for an account
-transactions_for "Assets : Bank : Checking" do
+transactions_for "1200" do  # Bank - Checking
   from: 2024-01-01
   to: 2024-01-31
 end
 
 # Transactions matching criteria
 transactions where do
-  account: "Expenses : Office : *"
+  account: "4*"  # All expense accounts
   amount: greater_than(100.00)
   date: in_month(2024, 1)
-  tax_relevant: true
 end
 ```
 
 ### 6.3 Report Queries
 
 ```
-# Balance sheet
+# Balance sheet (using account code ranges)
 balance_sheet at: 2024-01-31
 
 # Trial balance
 trial_balance at: 2024-01-31
 
 # Account activity
-activity_report for: "Assets : Bank : Checking" do
+activity_report for: "1200" do  # Bank - Checking
   from: 2024-01-01
   to: 2024-01-31
   include_running_balance: true
@@ -375,22 +380,24 @@ end
 ### 8.3 Account Validation Rules
 
 ```
+# Account validation
 validate account do
-  must have_unique_path
+  must have_unique_code
   must have_valid_parent
-  must have_valid_type in: [Asset, Liability, Equity, Revenue, Expense]
+  must have_name
 end
 ```
 
 ### 8.4 Custom Validation Rules
 
 ```
+# Transaction validation with conditions
 validate transaction do
   when description: contains("Tax") do
     at_least_one position must have tax_relevant: true
   end
 
-  when any_position_for account: matching("Assets : Bank : *") do
+  when any_position_for account: matching("12*") do  # Bank accounts
     must have description: not_empty
   end
 end

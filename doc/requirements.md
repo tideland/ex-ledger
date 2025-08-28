@@ -24,19 +24,22 @@ The Tideland Ledger is a web-based double-entry bookkeeping system implemented i
 
 - Double-entry bookkeeping system
 - Chart of accounts management (maintainable online)
+- Account hierarchy support without enforced types
+- Account meaning determined by numbering scheme and naming conventions
 - Transaction entry and posting
 - Transaction templates for recurring entries (maintainable online)
 - Templates must validate against existing accounts
 - Template positions use fractions of total sum as standard
 - Optional default totals for templates
-- Transaction validation and balance checking
+- Transaction validation ensuring debits equal credits
 - Journal entries with proper audit trail
 
 ### 2.3 Financial Reporting
 
-- Balance sheet generation
-- Account balance queries
+- Trial balance generation
+- Account balance queries (debit/credit totals)
 - Transaction history views
+- Flexible reporting based on account numbering schemes
 - Future: Additional reports and dashboards
 - Export capabilities (format to be defined)
 
@@ -159,10 +162,10 @@ The Tideland Ledger is a web-based double-entry bookkeeping system implemented i
 
 ### 7.2 Accounting Standards
 
-- **Accounting principles**: To be determined
-  - GAAP (Generally Accepted Accounting Principles) - US accounting standards
-  - IFRS (International Financial Reporting Standards) - International standards
-  - HGB (Handelsgesetzbuch) - German Commercial Code accounting rules
+- **Accounting principles**: Pure double-entry bookkeeping
+  - No enforced account types at system level
+  - Account structure follows chosen numbering scheme (e.g., SKR03, SKR04 for German accounting)
+  - Reporting logic interprets accounts based on their codes
 - **German bookkeeping**: Yes - system designed for German use
 - **Tax reporting**: Individual positions must be markable as tax-relevant
   - Example: When splitting invoices, distinguish between tax-deductible services (craftsmen) and materials

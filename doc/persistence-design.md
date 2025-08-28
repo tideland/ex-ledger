@@ -66,7 +66,6 @@ TABLE accounts {
   FIELD id : ID
   FIELD code : STRING(20) [NOT NULL, UNIQUE]
   FIELD name : STRING(100) [NOT NULL]
-  FIELD type : ENUM[asset, liability, equity, revenue, expense] [NOT NULL]
   FIELD parent_id : INTEGER [NULL]  // Self-reference for account hierarchy
   FIELD description : TEXT [NULL]
   FIELD active : BOOLEAN [NOT NULL, DEFAULT true]
@@ -78,7 +77,6 @@ TABLE accounts {
   CONSTRAINT fk_accounts_created_by FOREIGN KEY (created_by) REFERENCES users(id)
 
   INDEX idx_accounts_code ON (code)
-  INDEX idx_accounts_type ON (type)
   INDEX idx_accounts_parent ON (parent_id)
 }
 
@@ -196,7 +194,6 @@ TABLE account_balances {
   FIELD period_month : INTEGER [NOT NULL]
   FIELD debit_total : DECIMAL(15,2) [NOT NULL, DEFAULT 0.00]
   FIELD credit_total : DECIMAL(15,2) [NOT NULL, DEFAULT 0.00]
-  FIELD balance : DECIMAL(15,2) [NOT NULL, DEFAULT 0.00]
   FIELD transaction_count : INTEGER [NOT NULL, DEFAULT 0]
   FIELD last_updated : TIMESTAMP [NOT NULL, DEFAULT NOW]
 
@@ -256,7 +253,7 @@ RULE balanced_transaction {
 RULE valid_account_hierarchy {
   FOR EACH account
   WHERE parent_id IS NOT NULL
-  ASSERT parent.type = self.type
+  ASSERT parent exists
 }
 
 RULE no_void_modifications {
@@ -299,7 +296,6 @@ CREATE TABLE accounts (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     code TEXT NOT NULL UNIQUE,
     name TEXT NOT NULL,
-    type TEXT NOT NULL CHECK (type IN ('asset', 'liability', 'equity', 'revenue', 'expense')),
     parent_id INTEGER,
     description TEXT,
     active INTEGER NOT NULL DEFAULT 1,
@@ -311,7 +307,6 @@ CREATE TABLE accounts (
 );
 
 CREATE INDEX idx_accounts_code ON accounts(code);
-CREATE INDEX idx_accounts_type ON accounts(type);
 CREATE INDEX idx_accounts_parent ON accounts(parent_id);
 
 -- Transactions table
@@ -418,7 +413,6 @@ CREATE TABLE account_balances (
     period_month INTEGER NOT NULL,
     debit_total DECIMAL(15,2) NOT NULL DEFAULT 0.00,
     credit_total DECIMAL(15,2) NOT NULL DEFAULT 0.00,
-    balance DECIMAL(15,2) NOT NULL DEFAULT 0.00,
     transaction_count INTEGER NOT NULL DEFAULT 0,
     last_updated DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (account_id) REFERENCES accounts(id) ON DELETE RESTRICT,
@@ -544,19 +538,14 @@ SELECT
     a.id,
     a.code,
     a.name,
-    a.type,
     COALESCE(SUM(tl.debit_amount), 0) as total_debit,
     COALESCE(SUM(tl.credit_amount), 0) as total_credit,
-    CASE
-        WHEN a.type IN ('asset', 'expense') THEN
-            COALESCE(SUM(tl.debit_amount), 0) - COALESCE(SUM(tl.credit_amount), 0)
-        ELSE
-            COALESCE(SUM(tl.credit_amount), 0) - COALESCE(SUM(tl.debit_amount), 0)
-    END as balance
+    COALESCE(SUM(tl.debit_amount), 0) - COALESCE(SUM(tl.credit_amount), 0) as net_debit,
+    COALESCE(SUM(tl.credit_amount), 0) - COALESCE(SUM(tl.debit_amount), 0) as net_credit
 FROM accounts a
 LEFT JOIN transaction_lines tl ON a.id = tl.account_id
 LEFT JOIN transactions t ON tl.transaction_id = t.id AND t.status = 'posted'
-GROUP BY a.id, a.code, a.name, a.type;
+GROUP BY a.id, a.code, a.name;
 ```
 
 ### 2.4 Common Queries
@@ -566,12 +555,11 @@ GROUP BY a.id, a.code, a.name, a.type;
 SELECT
     code,
     name,
-    type,
     SUM(debit_amount) as debit_total,
     SUM(credit_amount) as credit_total
 FROM v_transaction_details
 WHERE status = 'posted'
-GROUP BY account_id, code, name, type
+GROUP BY account_id, code, name
 ORDER BY code;
 
 -- Get account statement
@@ -638,7 +626,6 @@ defmodule Ledger.Accounts.Account do
   schema "accounts" do
     field :code, :string
     field :name, :string
-    field :type, Ecto.Enum, values: [:asset, :liability, :equity, :revenue, :expense]
     field :description, :string
     field :active, :boolean, default: true
 
@@ -653,29 +640,13 @@ defmodule Ledger.Accounts.Account do
   @doc false
   def changeset(account, attrs) do
     account
-    |> cast(attrs, [:code, :name, :type, :description, :active, :parent_id, :created_by_id])
-    |> validate_required([:code, :name, :type, :created_by_id])
+    |> cast(attrs, [:code, :name, :description, :active, :parent_id, :created_by_id])
+    |> validate_required([:code, :name, :created_by_id])
     |> validate_length(:code, max: 20)
     |> validate_length(:name, max: 100)
     |> unique_constraint(:code)
     |> foreign_key_constraint(:parent_id)
-    |remove foreign_key_constraint(:created_by_id)
-    |> validate_parent_type()
-  end
-
-  defp validate_parent_type(changeset) do
-    case get_field(changeset, :parent_id) do
-      nil -> changeset
-      parent_id ->
-        validate_change(changeset, :type, fn :type, type ->
-          parent = Ledger.Repo.get(__MODULE__, parent_id)
-          if parent && parent.type != type do
-            [type: "must match parent account type"]
-          else
-            []
-          end
-        end)
-    end
+    |> foreign_key_constraint(:created_by_id)
   end
 end
 
@@ -901,7 +872,6 @@ defmodule Ledger.Accounts.AccountBalance do
     field :period_month, :integer
     field :debit_total, :decimal, default: Decimal.new(0)
     field :credit_total, :decimal, default: Decimal.new(0)
-    field :balance, :decimal, default: Decimal.new(0)
     field :transaction_count, :integer, default: 0
     field :last_updated, :utc_datetime
 
@@ -912,7 +882,7 @@ defmodule Ledger.Accounts.AccountBalance do
   def changeset(balance, attrs) do
     balance
     |> cast(attrs, [:account_id, :period_year, :period_month, :debit_total,
-                    :credit_total, :balance, :transaction_count])
+                    :credit_total, :transaction_count])
     |> validate_required([:account_id, :period_year, :period_month])
     |> validate_number(:period_year, greater_than: 2000)
     |> validate_number(:period_month, greater_than: 0, less_than_or_equal_to: 12)
@@ -1104,14 +1074,13 @@ defmodule Ledger.Transactions do
       a.id,
       a.code,
       a.name,
-      a.type,
       COALESCE(SUM(tl.debit_amount), 0) as debit_total,
       COALESCE(SUM(tl.credit_amount), 0) as credit_total
     FROM accounts a
     LEFT JOIN transaction_lines tl ON a.id = tl.account_id
     LEFT JOIN transactions t ON tl.transaction_id = t.id
     WHERE t.status = 'posted' AND t.transaction_date <= $1
-    GROUP BY a.id, a.code, a.name, a.type
+    GROUP BY a.id, a.code, a.name
     ORDER BY a.code
     """
 
@@ -1289,7 +1258,6 @@ defmodule Ledger.Repo.Migrations.CreateAccounts do
     create table(:accounts) do
       add :code, :string, null: false
       add :name, :string, null: false
-      add :type, :string, null: false
       add :parent_id, references(:accounts, on_delete: :restrict)
       add :description, :text
       add :active, :boolean, default: true, null: false
@@ -1299,7 +1267,6 @@ defmodule Ledger.Repo.Migrations.CreateAccounts do
     end
 
     create unique_index(:accounts, [:code])
-    create index(:accounts, [:type])
     create index(:accounts, [:parent_id])
 
     execute """
@@ -1411,25 +1378,9 @@ defmodule Ledger.Queries.AccountQueries do
         a |
         debit_total: coalesce(sum(tl.debit_amount), 0),
         credit_total: coalesce(sum(tl.credit_amount), 0),
-        balance:
-          fragment(
-            "CASE
-              WHEN ? IN ('asset', 'expense') THEN
-                COALESCE(SUM(?), 0) - COALESCE(SUM(?), 0)
-              ELSE
-                COALESCE(SUM(?), 0) - COALESCE(SUM(?), 0)
-            END",
-            a.type,
-            tl.debit_amount,
-            tl.credit_amount,
-            tl.credit_amount,
-            tl.debit_amount
-          )
+        net_debit: coalesce(sum(tl.debit_amount), 0) - coalesce(sum(tl.credit_amount), 0),
+        net_credit: coalesce(sum(tl.credit_amount), 0) - coalesce(sum(tl.debit_amount), 0)
       }
-  end
-
-  def by_type(query \\ Account, type) do
-    from a in query, where: a.type == ^type
   end
 
   def active(query \\ Account) do

@@ -32,44 +32,45 @@ Transaction: "Purchase office supplies with cash"
 - Sum: +50.00 + (-50.00) = 0.00 ✓
 ```
 
-## 2. Account Types and Normal Balances
+## 2. Account Organization and Conventions
 
-### 2.1 Basic Account Categories
+### 2.1 Account Structure
 
-1. **Assets** (Aktiva)
-   - Normal balance: Debit (positive)
-   - Increases with positive amounts
+In the ledger system, all accounts are equal - there are no enforced types. The meaning and grouping of accounts is determined by:
+
+1. **Account Code/Number**: Following standard numbering schemes (e.g., SKR03, SKR04 for German accounting)
+2. **Account Name**: Descriptive names that indicate the account's purpose
+3. **Account Hierarchy**: Parent-child relationships for organizational structure
+
+### 2.2 Accounting Conventions (Not System-Enforced)
+
+While the ledger doesn't enforce account types, accounting conventions typically organize accounts as:
+
+1. **Assets** (Aktiva) - e.g., codes 0000-1999 in SKR03
+   - Convention: Debit increases, credit decreases
    - Examples: Cash, Bank accounts, Inventory, Equipment
 
-2. **Liabilities** (Passiva/Verbindlichkeiten)
-   - Normal balance: Credit (negative)
-   - Increases with negative amounts
+2. **Liabilities** (Passiva/Verbindlichkeiten) - e.g., codes 3000-3999 in SKR03
+   - Convention: Credit increases, debit decreases
    - Examples: Loans, Accounts payable
 
-3. **Equity** (Eigenkapital)
-   - Normal balance: Credit (negative)
-   - Increases with negative amounts
+3. **Equity** (Eigenkapital) - e.g., codes 2000-2999 in SKR03
+   - Convention: Credit increases, debit decreases
    - Examples: Capital, Retained earnings
 
-4. **Revenue/Income** (Erträge)
-   - Normal balance: Credit (negative)
-   - Increases with negative amounts
+4. **Revenue/Income** (Erträge) - e.g., codes 8000-8999 in SKR03
+   - Convention: Credit increases, debit decreases
    - Examples: Sales, Service income
 
-5. **Expenses** (Aufwendungen)
-   - Normal balance: Debit (positive)
-   - Increases with positive amounts
+5. **Expenses** (Aufwendungen) - e.g., codes 4000-7999 in SKR03
+   - Convention: Debit increases, credit decreases
    - Examples: Rent, Salaries, Utilities
 
-### 2.2 The Accounting Equation
+### 2.3 The Fundamental Rule
 
-Assets = Liabilities + Equity + (Revenue - Expenses)
+The only enforced rule in the ledger: **Every transaction must balance to zero**.
 
-In our zero-sum system:
-
-- Assets have positive balances
-- Liabilities, Equity, and Revenue have negative balances
-- Expenses have positive balances
+The accounting equation (Assets = Liabilities + Equity + Revenue - Expenses) is a reporting convention built on top of the ledger data, not enforced by the system itself.
 
 ## 3. Transaction Examples
 
@@ -79,8 +80,8 @@ In our zero-sum system:
 Transaction: "Buy laptop for 1,200.00"
 Date: 2024-01-15
 Positions:
-  1. Equipment (Asset):     +1,200.00
-  2. Bank Account (Asset):  -1,200.00
+  1. Account 0620 (Equipment):     +1,200.00
+  2. Account 1200 (Bank Account):  -1,200.00
 Sum: 0.00 ✓
 ```
 
@@ -90,8 +91,8 @@ Sum: 0.00 ✓
 Transaction: "Invoice client for services"
 Date: 2024-01-20
 Positions:
-  1. Accounts Receivable (Asset):  +5,000.00
-  2. Service Revenue (Revenue):    -5,000.00
+  1. Account 1400 (Accounts Receivable):  +5,000.00
+  2. Account 8400 (Service Revenue):      -5,000.00
 Sum: 0.00 ✓
 ```
 

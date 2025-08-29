@@ -141,13 +141,13 @@ end
 ### 4.1 Simple Transaction
 
 ```
-# Simple double-entry syntax - using account codes
+# Simple transaction syntax - using account codes
 transaction do
   date: 2024-01-15
   description: "Purchase office supplies"
 
-  debit  "4100", Amount.new(50.00)  # Office Supplies
-  credit "1200", Amount.new(50.00)  # Bank - Checking
+  position "4100", Amount.new(50.00)   # Office Supplies (debit)
+  position "1200", Amount.new(-50.00)  # Bank - Checking (credit)
 end
 
 # Or with implicit conversion
@@ -155,25 +155,12 @@ transaction do
   date: 2024-01-15
   description: "Purchase office supplies"
 
-  debit  "4100", 50.00  # Office Supplies
-  credit "1200", 50.00  # Bank - Checking
+  position "4100", 50.00   # Office Supplies (debit)
+  position "1200", -50.00  # Bank - Checking (credit)
 end
 ```
 
-### 4.2 Using Position Syntax
-
-```
-# Position-based syntax (positive/negative amounts)
-transaction do
-  date: 2024-01-15
-  description: "Purchase office supplies"
-
-  position "4100", +50.00  # Office Supplies
-  position "1200", -50.00  # Bank - Checking
-end
-```
-
-### 4.3 Multi-Position Transaction
+### 4.2 Multi-Position Transaction
 
 ```
 # Multi-position transaction
@@ -187,7 +174,7 @@ transaction do
 end
 ```
 
-### 4.4 Tax-Relevant Positions
+### 4.3 Tax-Relevant Positions
 
 ```
 # Tax relevance tagging
@@ -449,20 +436,18 @@ import_csv "transactions.csv" do
   map column: "Date" to: :date with: date_parser("dd.mm.yyyy")
   map column: "Description" to: :description
   map column: "Account" to: :account with: account_lookup
-  map column: "Debit" to: :debit_amount with: amount_parser
-  map column: "Credit" to: :credit_amount with: amount_parser
+  map column: "Amount" to: :amount with: amount_parser
+  map column: "Type" to: :type  # "debit" or "credit"
 
   create_transaction for_each_row do |row|
     date: row.date
     description: row.description
 
-    if row.debit_amount > 0
-      position row.account, +row.debit_amount
-      position "Assets : Bank : Checking", -row.debit_amount
-    else
-      position row.account, -row.credit_amount
-      position "Assets : Bank : Checking", +row.credit_amount
-    end
+    # Convert to signed amount based on type
+    signed_amount = row.type == "debit" ? row.amount : -row.amount
+
+    position row.account, signed_amount
+    position "1200", -signed_amount  # Bank - Checking
   end
 end
 ```

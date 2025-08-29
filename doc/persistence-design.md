@@ -110,8 +110,7 @@ TABLE transaction_lines {
   FIELD transaction_id : INTEGER [NOT NULL]
   FIELD account_id : INTEGER [NOT NULL]
   FIELD description : STRING(200) [NULL]
-  FIELD debit_amount : DECIMAL(15,2) [NOT NULL, DEFAULT 0.00]
-  FIELD credit_amount : DECIMAL(15,2) [NOT NULL, DEFAULT 0.00]
+  FIELD amount : DECIMAL(15,2) [NOT NULL]  // Positive = Debit, Negative = Credit
   FIELD tax_relevant : BOOLEAN [NOT NULL, DEFAULT false]
   FIELD position : INTEGER [NOT NULL]  // Order within transaction
   FIELD created_at : TIMESTAMP [NOT NULL, DEFAULT NOW]
@@ -119,10 +118,7 @@ TABLE transaction_lines {
 
   CONSTRAINT fk_lines_transaction FOREIGN KEY (transaction_id) REFERENCES transactions(id)
   CONSTRAINT fk_lines_account FOREIGN KEY (account_id) REFERENCES accounts(id)
-  CONSTRAINT chk_lines_amount CHECK (
-    (debit_amount > 0 AND credit_amount = 0) OR
-    (debit_amount = 0 AND credit_amount > 0)
-  )
+  CONSTRAINT chk_lines_amount CHECK (amount != 0)
 
   INDEX idx_lines_transaction ON (transaction_id)
   INDEX idx_lines_account ON (account_id)
@@ -247,7 +243,7 @@ RELATION templates_have_lines {
 RULE balanced_transaction {
   FOR EACH transaction
   WHERE status = 'posted'
-  ASSERT SUM(transaction_lines.debit_amount) = SUM(transaction_lines.credit_amount)
+  ASSERT SUM(transaction_lines.amount) = 0
 }
 
 RULE valid_account_hierarchy {
@@ -338,15 +334,14 @@ CREATE TABLE transaction_lines (
     transaction_id INTEGER NOT NULL,
     account_id INTEGER NOT NULL,
     description TEXT,
-    debit_amount DECIMAL(15,2) NOT NULL DEFAULT 0.00,
-    credit_amount DECIMAL(15,2) NOT NULL DEFAULT 0.00,
+    amount DECIMAL(15,2) NOT NULL,
     tax_relevant INTEGER NOT NULL DEFAULT 0,
     position INTEGER NOT NULL,
     created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (transaction_id) REFERENCES transactions(id) ON DELETE CASCADE,
     FOREIGN KEY (account_id) REFERENCES accounts(id) ON DELETE RESTRICT,
-    CHECK ((debit_amount > 0 AND credit_amount = 0) OR (debit_amount = 0 AND credit_amount > 0))
+    CHECK (amount != 0)
 );
 
 CREATE INDEX idx_lines_transaction ON transaction_lines(transaction_id);
@@ -483,7 +478,7 @@ BEFORE UPDATE ON transactions
 WHEN NEW.status = 'posted' AND OLD.status = 'draft'
 BEGIN
     SELECT CASE
-        WHEN (SELECT SUM(debit_amount) - SUM(credit_amount)
+        WHEN (SELECT SUM(amount)
               FROM transaction_lines
               WHERE transaction_id = NEW.id) != 0
         THEN RAISE(ABORT, 'Transaction is not balanced')
@@ -522,8 +517,9 @@ SELECT
     a.code as account_code,
     a.name as account_name,
     tl.description as line_description,
-    tl.debit_amount,
-    tl.credit_amount,
+    tl.amount,
+    CASE WHEN tl.amount > 0 THEN tl.amount ELSE 0 END as debit_amount,
+    CASE WHEN tl.amount < 0 THEN ABS(tl.amount) ELSE 0 END as credit_amount,
     tl.tax_relevant,
     u.username as created_by_username
 FROM transactions t
@@ -538,10 +534,9 @@ SELECT
     a.id,
     a.code,
     a.name,
-    COALESCE(SUM(tl.debit_amount), 0) as total_debit,
-    COALESCE(SUM(tl.credit_amount), 0) as total_credit,
-    COALESCE(SUM(tl.debit_amount), 0) - COALESCE(SUM(tl.credit_amount), 0) as net_debit,
-    COALESCE(SUM(tl.credit_amount), 0) - COALESCE(SUM(tl.debit_amount), 0) as net_credit
+    COALESCE(SUM(CASE WHEN tl.amount > 0 THEN tl.amount ELSE 0 END), 0) as total_debit,
+    COALESCE(SUM(CASE WHEN tl.amount < 0 THEN ABS(tl.amount) ELSE 0 END), 0) as total_credit,
+    COALESCE(SUM(tl.amount), 0) as balance
 FROM accounts a
 LEFT JOIN transaction_lines tl ON a.id = tl.account_id
 LEFT JOIN transactions t ON tl.transaction_id = t.id AND t.status = 'posted'
@@ -555,8 +550,9 @@ GROUP BY a.id, a.code, a.name;
 SELECT
     code,
     name,
-    SUM(debit_amount) as debit_total,
-    SUM(credit_amount) as credit_total
+    SUM(CASE WHEN amount > 0 THEN amount ELSE 0 END) as debit_total,
+    SUM(CASE WHEN amount < 0 THEN ABS(amount) ELSE 0 END) as credit_total,
+    SUM(amount) as balance
 FROM v_transaction_details
 WHERE status = 'posted'
 GROUP BY account_id, code, name
@@ -567,9 +563,8 @@ SELECT
     transaction_date,
     reference_number,
     description,
-    debit_amount,
-    credit_amount,
-    SUM(debit_amount - credit_amount) OVER (ORDER BY transaction_date, id) as running_balance
+    amount,
+    SUM(amount) OVER (ORDER BY transaction_date, id) as running_balance
 FROM v_transaction_details
 WHERE account_code = ? AND status = 'posted'
 ORDER BY transaction_date, id;
@@ -579,13 +574,13 @@ SELECT
     id,
     transaction_date,
     description,
-    SUM(debit_amount) as total_debit,
-    SUM(credit_amount) as total_credit,
-    SUM(debit_amount) - SUM(credit_amount) as difference
+    SUM(CASE WHEN tl.amount > 0 THEN tl.amount ELSE 0 END) as total_debit,
+    SUM(CASE WHEN tl.amount < 0 THEN ABS(tl.amount) ELSE 0 END) as total_credit,
+    SUM(tl.amount) as imbalance
 FROM transactions t
 INNER JOIN transaction_lines tl ON t.id = tl.transaction_id
 GROUP BY t.id, t.transaction_date, t.description
-HAVING difference != 0;
+HAVING imbalance != 0;
 ```
 
 ---
@@ -701,13 +696,14 @@ defmodule Ledger.Transactions.Transaction do
     case get_field(changeset, :status) do
       :posted ->
         lines = get_field(changeset, :lines) || []
-        total_debit = Enum.reduce(lines, Decimal.new(0), &Decimal.add(&1.debit_amount || 0, &2))
-        total_credit = Enum.reduce(lines, Decimal.new(0), &Decimal.add(&1.credit_amount || 0, &2))
+        total = Enum.reduce(lines, Decimal.new(0), fn line, acc ->
+          Decimal.add(line.amount || Decimal.new(0), acc)
+        end)
 
-        if Decimal.eq?(total_debit, total_credit) do
+        if Decimal.eq?(total, 0) do
           changeset
         else
-          add_error(changeset, :lines, "transaction must be balanced")
+          add_error(changeset, :lines, "transaction must balance to zero")
         end
       _ -> changeset
     end
@@ -730,8 +726,7 @@ defmodule Ledger.Transactions.TransactionLine do
 
   schema "transaction_lines" do
     field :description, :string
-    field :debit_amount, :decimal, default: Decimal.new(0)
-    field :credit_amount, :decimal, default: Decimal.new(0)
+    field :amount, :decimal
     field :tax_relevant, :boolean, default: false
     field :position, :integer
 
@@ -744,28 +739,11 @@ defmodule Ledger.Transactions.TransactionLine do
   @doc false
   def changeset(line, attrs) do
     line
-    |> cast(attrs, [:account_id, :description, :debit_amount, :credit_amount,
-                    :tax_relevant, :position])
-    |> validate_required([:account_id, :position])
+    |> cast(attrs, [:account_id, :description, :amount, :tax_relevant, :position])
+    |> validate_required([:account_id, :amount, :position])
     |> validate_length(:description, max: 200)
-    |> validate_number(:debit_amount, greater_than_or_equal_to: 0)
-    |> validate_number(:credit_amount, greater_than_or_equal_to: 0)
-    |> validate_single_amount()
+    |> validate_number(:amount, not_equal_to: 0)
     |> foreign_key_constraint(:account_id)
-  end
-
-  defp validate_single_amount(changeset) do
-    debit = get_field(changeset, :debit_amount) || Decimal.new(0)
-    credit = get_field(changeset, :credit_amount) || Decimal.new(0)
-
-    cond do
-      Decimal.gt?(debit, 0) && Decimal.gt?(credit, 0) ->
-        add_error(changeset, :base, "line cannot have both debit and credit")
-      Decimal.eq?(debit, 0) && Decimal.eq?(credit, 0) ->
-        add_error(changeset, :base, "line must have either debit or credit")
-      true ->
-        changeset
-    end
   end
 end
 
@@ -1074,8 +1052,9 @@ defmodule Ledger.Transactions do
       a.id,
       a.code,
       a.name,
-      COALESCE(SUM(tl.debit_amount), 0) as debit_total,
-      COALESCE(SUM(tl.credit_amount), 0) as credit_total
+      COALESCE(SUM(CASE WHEN tl.amount > 0 THEN tl.amount ELSE 0 END), 0) as debit_total,
+      COALESCE(SUM(CASE WHEN tl.amount < 0 THEN ABS(tl.amount) ELSE 0 END), 0) as credit_total,
+      COALESCE(SUM(tl.amount), 0) as balance
     FROM accounts a
     LEFT JOIN transaction_lines tl ON a.id = tl.account_id
     LEFT JOIN transactions t ON tl.transaction_id = t.id
@@ -1155,28 +1134,24 @@ defmodule Ledger.Templates do
   end
 
   def apply_template(%Template{} = template, total_amount \\ nil) do
-    amount = total_amount || template.default_total || Decimal.new(0)
-
     lines = Enum.map(template.lines, fn line ->
-      line_amount = calculate_line_amount(line, amount)
-
+      line_amount = calculate_line_amount(line, total_amount)
       %{
         account_id: line.account_id,
         description: line.description,
-        debit_amount: if(line.line_type == :debit, line_amount, Decimal.new(0)),
-        credit_amount: if(line.line_type == :credit, line_amount, Decimal.new(0)),
+        amount: if(line.line_type == :debit, line_amount, Decimal.negate(line_amount)),
         tax_relevant: line.tax_relevant,
         position: line.position
       }
     end)
 
     # Ensure balanced transaction by adjusting rounding differences
-    {debit_total, credit_total} = calculate_totals(lines)
+    total = calculate_total(lines)
 
-    if Decimal.eq?(debit_total, credit_total) do
+    if Decimal.eq?(total, 0) do
       {:ok, lines}
     else
-      {:ok, balance_lines(lines, debit_total, credit_total)}
+      {:ok, balance_lines(lines, total)}
     end
   end
 
@@ -1191,26 +1166,18 @@ defmodule Ledger.Templates do
     |> Decimal.round(2)
   end
 
-  defp calculate_totals(lines) do
-    Enum.reduce(lines, {Decimal.new(0), Decimal.new(0)}, fn line, {debit, credit} ->
-      {
-        Decimal.add(debit, line.debit_amount),
-        Decimal.add(credit, line.credit_amount)
-      }
+  defp calculate_total(lines) do
+    Enum.reduce(lines, Decimal.new(0), fn line, acc ->
+      Decimal.add(acc, line.amount)
     end)
   end
 
-  defp balance_lines(lines, debit_total, credit_total) do
-    # Add rounding difference to the last line
-    diff = Decimal.sub(debit_total, credit_total)
+  defp balance_lines(lines, total) do
+    # Add rounding difference to the last line to ensure zero balance
     last_index = length(lines) - 1
 
     List.update_at(lines, last_index, fn line ->
-      if Decimal.gt?(diff, 0) do
-        Map.update!(line, :credit_amount, &Decimal.add(&1, diff))
-      else
-        Map.update!(line, :debit_amount, &Decimal.add(&1, Decimal.abs(diff)))
-      end
+      Map.update!(line, :amount, &Decimal.sub(&1, total))
     end)
   end
 end
@@ -1376,10 +1343,9 @@ defmodule Ledger.Queries.AccountQueries do
       group_by: a.id,
       select: %{
         a |
-        debit_total: coalesce(sum(tl.debit_amount), 0),
-        credit_total: coalesce(sum(tl.credit_amount), 0),
-        net_debit: coalesce(sum(tl.debit_amount), 0) - coalesce(sum(tl.credit_amount), 0),
-        net_credit: coalesce(sum(tl.credit_amount), 0) - coalesce(sum(tl.debit_amount), 0)
+        debit_total: coalesce(sum(fragment("CASE WHEN ? > 0 THEN ? ELSE 0 END", tl.amount, tl.amount)), 0),
+        credit_total: coalesce(sum(fragment("CASE WHEN ? < 0 THEN ABS(?) ELSE 0 END", tl.amount, tl.amount)), 0),
+        balance: coalesce(sum(tl.amount), 0)
       }
   end
 
@@ -1422,7 +1388,7 @@ defmodule Ledger.Queries.TransactionQueries do
     from t in query,
       join: tl in assoc(t, :lines),
       group_by: t.id,
-      having: sum(tl.debit_amount) != sum(tl.credit_amount)
+      having: sum(tl.amount) != 0
   end
 end
 ```

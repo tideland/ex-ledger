@@ -1,5 +1,19 @@
 # Tideland Ledger - Formal Specification
 
+Copyright 2024 Frank Mueller / Tideland / Oldenburg / Germany
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+
 ## 1. Overview
 
 This document provides a formal specification for the Tideland Ledger system, consolidating all requirements with their constraints, chosen solutions, and rationales for each decision.
@@ -11,6 +25,7 @@ This document provides a formal specification for the Tideland Ledger system, co
 **Requirement**: The system must be implemented in Elixir using the Phoenix Framework.
 
 **Constraints**:
+
 - Developer is new to Elixir but experienced in other languages
 - Must serve as a learning project
 - Should follow Elixir/OTP best practices
@@ -24,6 +39,7 @@ This document provides a formal specification for the Tideland Ledger system, co
 **Requirement**: Use SQLite for data persistence.
 
 **Constraints**:
+
 - Must support ACID transactions
 - Should be simple to deploy and backup
 - No need for distributed database features
@@ -37,6 +53,7 @@ This document provides a formal specification for the Tideland Ledger system, co
 **Requirement**: Web-based user interface without Node.js or complex JavaScript frameworks.
 
 **Constraints**:
+
 - No Node.js in the build pipeline
 - Minimal client-side JavaScript
 - Must provide real-time feedback for data entry
@@ -50,6 +67,7 @@ This document provides a formal specification for the Tideland Ledger system, co
 **Requirement**: All configuration must be externalized to TOML files.
 
 **Constraints**:
+
 - No hardcoded configuration except roles and admin user
 - Must support different deployment environments
 - Configuration should be human-readable
@@ -65,6 +83,7 @@ This document provides a formal specification for the Tideland Ledger system, co
 **Requirement**: Use external Tideland Auth service for authentication.
 
 **Constraints**:
+
 - Cannot implement own authentication
 - Must integrate with existing auth service
 - Need to map external users to local roles
@@ -78,6 +97,7 @@ This document provides a formal specification for the Tideland Ledger system, co
 **Requirement**: Three hardcoded roles: Admin, Bookkeeper (Buchhalter), Viewer (Betrachter).
 
 **Constraints**:
+
 - Roles must be hardcoded, not configurable
 - Hardcoded "admin" superuser account
 - Role-based permissions for all operations
@@ -91,6 +111,7 @@ This document provides a formal specification for the Tideland Ledger system, co
 **Requirement**: Single-tenant system with one set of books shared by all users.
 
 **Constraints**:
+
 - No user-specific books
 - All users see the same data (based on permissions)
 - No data isolation between users
@@ -106,6 +127,7 @@ This document provides a formal specification for the Tideland Ledger system, co
 **Requirement**: Implement pure double-entry bookkeeping without enforced account types.
 
 **Constraints**:
+
 - Every transaction must balance (sum to zero)
 - Minimum two positions per transaction
 - No system-enforced account types (assets, liabilities, etc.)
@@ -119,6 +141,7 @@ This document provides a formal specification for the Tideland Ledger system, co
 **Requirement**: Hierarchical account structure without enforced types.
 
 **Constraints**:
+
 - Support various numbering schemes (SKR03, SKR04)
 - Account meaning derived from numbering convention
 - Must support parent-child relationships
@@ -132,6 +155,7 @@ This document provides a formal specification for the Tideland Ledger system, co
 **Requirement**: Signed decimal amounts instead of separate debit/credit fields.
 
 **Constraints**:
+
 - Must maintain precision for currency (2 decimal places)
 - Positive represents debit, negative represents credit
 - Must handle distribution/splitting correctly
@@ -145,6 +169,7 @@ This document provides a formal specification for the Tideland Ledger system, co
 **Requirement**: Correct distribution when splitting amounts (e.g., 100/3).
 
 **Constraints**:
+
 - Sum of distributed amounts must equal original
 - Rounding must not create imbalances
 - Must work for any number of splits
@@ -158,6 +183,7 @@ This document provides a formal specification for the Tideland Ledger system, co
 **Requirement**: Reusable transaction templates with fractional distribution.
 
 **Constraints**:
+
 - Templates must validate against existing accounts
 - Support both fixed amounts and percentages
 - Fractions as standard approach (not special case)
@@ -171,6 +197,7 @@ This document provides a formal specification for the Tideland Ledger system, co
 **Requirement**: Mark individual positions as tax-relevant.
 
 **Constraints**:
+
 - Must be at position level, not transaction level
 - Support German tax requirements
 - Example: Split craftsman invoice into deductible labor and non-deductible materials
@@ -186,6 +213,7 @@ This document provides a formal specification for the Tideland Ledger system, co
 **Requirement**: German-only user interface.
 
 **Constraints**:
+
 - All UI text in German
 - Source code and documentation in English
 - Database content in user's language (German)
@@ -199,6 +227,7 @@ This document provides a formal specification for the Tideland Ledger system, co
 **Requirement**: Simple, flat design like mainframe terminals.
 
 **Constraints**:
+
 - No gradients, shadows, or complex CSS
 - Menu items as full clickable areas
 - Minimal color usage
@@ -213,6 +242,7 @@ This document provides a formal specification for the Tideland Ledger system, co
 **Requirement**: Clear, flat navigation without dropdowns.
 
 **Constraints**:
+
 - All functions accessible within 2 clicks
 - No nested menus
 - Vertical menu for variable page widths
@@ -228,6 +258,7 @@ This document provides a formal specification for the Tideland Ledger system, co
 **Requirement**: Efficient transaction entry with real-time validation.
 
 **Constraints**:
+
 - Must show running balance
 - Validate zero-sum before saving
 - Support dynamic position adding/removal
@@ -241,6 +272,7 @@ This document provides a formal specification for the Tideland Ledger system, co
 **Requirement**: Account selection supporting hierarchical paths.
 
 **Constraints**:
+
 - Must show full account path
 - Searchable by any part of path
 - Wide enough for long hierarchical names
@@ -254,6 +286,7 @@ This document provides a formal specification for the Tideland Ledger system, co
 **Requirement**: ISO 8601 date format throughout the system.
 
 **Constraints**:
+
 - Consistent sorting
 - Unambiguous format
 - International standard
@@ -269,6 +302,7 @@ This document provides a formal specification for the Tideland Ledger system, co
 **Requirement**: Generate standard accounting reports.
 
 **Constraints**:
+
 - Trial balance (Probebilanz)
 - Balance sheet (Bilanz)
 - Account statements (Kontoauszug)
@@ -283,6 +317,7 @@ This document provides a formal specification for the Tideland Ledger system, co
 **Requirement**: Export reports in common formats.
 
 **Constraints**:
+
 - CSV for data processing
 - PDF for archival (future)
 - Maintain number formatting
@@ -298,6 +333,7 @@ This document provides a formal specification for the Tideland Ledger system, co
 **Requirement**: Follow Phoenix conventions with clear separation of concerns.
 
 **Constraints**:
+
 - Business logic separate from web layer
 - Contexts for domain boundaries
 - OTP supervision trees
@@ -311,6 +347,7 @@ This document provides a formal specification for the Tideland Ledger system, co
 **Requirement**: Comprehensive test coverage.
 
 **Constraints**:
+
 - Unit tests for business logic
 - Integration tests for workflows
 - Test data factories
@@ -324,6 +361,7 @@ This document provides a formal specification for the Tideland Ledger system, co
 **Requirement**: Graceful error handling with user-friendly messages.
 
 **Constraints**:
+
 - Never show technical errors to users
 - Log technical details for debugging
 - Provide recovery suggestions
@@ -339,6 +377,7 @@ This document provides a formal specification for the Tideland Ledger system, co
 **Requirement**: Distribute as Hex package "tideland-ledger".
 
 **Constraints**:
+
 - Follow Elixir naming conventions
 - Repository at github.com/tideland/ex-ledger
 - Semantic versioning
@@ -352,6 +391,7 @@ This document provides a formal specification for the Tideland Ledger system, co
 **Requirement**: Support multiple deployment scenarios.
 
 **Constraints**:
+
 - Development with local files
 - Production with system paths
 - Docker containers
@@ -365,6 +405,7 @@ This document provides a formal specification for the Tideland Ledger system, co
 **Requirement**: Configurable SQLite database location.
 
 **Constraints**:
+
 - Development: local directory
 - Production: system directory
 - Must be backup-friendly
@@ -380,6 +421,7 @@ This document provides a formal specification for the Tideland Ledger system, co
 **Requirement**: Sub-second response for common operations.
 
 **Constraints**:
+
 - Transaction entry
 - Report generation for < 10,000 transactions
 - Account balance queries
@@ -393,6 +435,7 @@ This document provides a formal specification for the Tideland Ledger system, co
 **Requirement**: Handle thousands of transactions efficiently.
 
 **Constraints**:
+
 - Single SQLite database
 - Limited by disk I/O
 - No distributed processing
@@ -408,6 +451,7 @@ This document provides a formal specification for the Tideland Ledger system, co
 **Requirement**: Import transactions from CSV files (future phase).
 
 **Constraints**:
+
 - Configurable column mapping
 - Validation before import
 - German number format support
@@ -421,6 +465,7 @@ This document provides a formal specification for the Tideland Ledger system, co
 **Requirement**: Automated backup functionality.
 
 **Constraints**:
+
 - SQLite file-based backup
 - Scheduled execution
 - Retention policies

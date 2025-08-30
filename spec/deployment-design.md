@@ -11,7 +11,7 @@ This document describes the deployment strategy for Tideland Ledger following El
 - **Package Name**: tideland-ledger
 - **Organization**: Tideland
 - **Repository**: https://github.com/tideland/ex-ledger
-- **License**: BSD
+- **License**: Apache 2.0
 - **Hex URL**: https://hex.pm/packages/tideland-ledger
 
 ### 2.2 Version Strategy
@@ -84,7 +84,7 @@ defmodule Ledger.MixProject do
   defp package do
     [
       name: "tideland-ledger",
-      licenses: ["BSD"],
+      licenses: ["Apache-2.0"],
       maintainers: ["Frank Mueller"],
       links: %{
         "GitHub" => @source_url,

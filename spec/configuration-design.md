@@ -99,7 +99,7 @@ currency_position = "after"  # "before" or "after"
 
 [accounts]
 # Chart of accounts settings
-numbering_scheme = "SKR03"  # "SKR03", "SKR04", or "custom"
+hierarchy_separator = " : "  # Separator for hierarchical accounts
 
 # Note: The ledger system does not enforce account types.
 # Account interpretation (asset, liability, etc.) is determined
@@ -323,8 +323,8 @@ end
 defmodule Ledger.Accounts do
   alias Ledger.Config
 
-  def numbering_scheme do
-    Config.get([:accounts, :numbering_scheme], "SKR03")
+  def hierarchy_separator do
+    Config.get([:accounts, :hierarchy_separator], " : ")
   end
 
   def max_code_length do
@@ -460,8 +460,8 @@ Some values are intentionally hardcoded in the application rather than made conf
 The ledger system intentionally does not have a concept of account types (asset, liability, equity, revenue, expense). Instead:
 
 - Accounts are identified only by their code and name
-- The numbering scheme (e.g., SKR03) defines the meaning of account code ranges
-- Reporting logic interprets accounts based on their codes according to the chosen scheme
+- The hierarchical account structure defines the meaning through naming
+- Reporting logic interprets accounts based on their hierarchical position and names
 - This provides maximum flexibility and avoids hard-coding accounting standards
 
 ## Configuration Summary

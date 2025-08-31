@@ -107,15 +107,15 @@ end
 ### 3.2 Bulk Account Definition
 
 ```
-# Hierarchical account structure using code ranges
+# Hierarchical account structure using string-based naming
 define_accounts do
-  # Using SKR03-style numbering
-  group "1000-1999" do  # Bank accounts and cash
-    account "1000" with name: "Cash", description: "Cash on hand"
-    account "1001" with name: "Petty Cash", description: "Petty cash fund"
-    group "1200-1299" do  # Bank accounts
-      account "1200" with name: "Bank - Checking", description: "Main account"
-      account "1210" with name: "Bank - Savings", description: "Reserve funds"
+  # Using hierarchical naming with colon separators
+  group "Vermögen" do  # Assets
+    account "Vermögen : Bargeld" with description: "Cash on hand"
+    account "Vermögen : Kasse" with description: "Petty cash fund"
+    group "Vermögen : Bank" do  # Bank accounts
+      account "Vermögen : Bank : Girokonto" with description: "Main account"
+      account "Vermögen : Bank : Sparkonto" with description: "Reserve funds"
     end
   end
 

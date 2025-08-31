@@ -38,7 +38,7 @@ Transaction: "Purchase office supplies with cash"
 
 In the ledger system, all accounts are equal - there are no enforced types. The meaning and grouping of accounts is determined by:
 
-1. **Account Code/Number**: Following standard numbering schemes (e.g., SKR03, SKR04 for German accounting)
+1. **Account Code/Number**: Following hierarchical naming conventions
 2. **Account Name**: Descriptive names that indicate the account's purpose
 3. **Account Hierarchy**: Parent-child relationships for organizational structure
 
@@ -46,23 +46,23 @@ In the ledger system, all accounts are equal - there are no enforced types. The 
 
 While the ledger doesn't enforce account types, accounting conventions typically organize accounts as:
 
-1. **Assets** (Aktiva) - e.g., codes 0000-1999 in SKR03
+1. **Assets** (Aktiva)
    - Convention: Debit increases, credit decreases
    - Examples: Cash, Bank accounts, Inventory, Equipment
 
-2. **Liabilities** (Passiva/Verbindlichkeiten) - e.g., codes 3000-3999 in SKR03
+2. **Liabilities** (Passiva/Verbindlichkeiten)
    - Convention: Credit increases, debit decreases
    - Examples: Loans, Accounts payable
 
-3. **Equity** (Eigenkapital) - e.g., codes 2000-2999 in SKR03
+3. **Equity** (Eigenkapital)
    - Convention: Credit increases, debit decreases
    - Examples: Capital, Retained earnings
 
-4. **Revenue/Income** (Erträge) - e.g., codes 8000-8999 in SKR03
+4. **Revenue/Income** (Erträge)
    - Convention: Credit increases, debit decreases
    - Examples: Sales, Service income
 
-5. **Expenses** (Aufwendungen) - e.g., codes 4000-7999 in SKR03
+5. **Expenses** (Aufwendungen)
    - Convention: Debit increases, credit decreases
    - Examples: Rent, Salaries, Utilities
 

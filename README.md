@@ -1,14 +1,14 @@
 # Tideland Ledger
 
-A web-based double-entry bookkeeping system implemented in Elixir, designed for learning and practical use.
+A web-based simplified ledger-style bookkeeping system implemented in Elixir, designed for learning and practical use.
 
 ## Overview
 
 Tideland Ledger is a comprehensive accounting system that provides:
 
-- Double-entry bookkeeping with full transaction validation
+- Simplified ledger-style bookkeeping with transaction validation
 - Multi-user support with role-based access control (Admin, Bookkeeper, Viewer)
-- Chart of accounts management
+- Hierarchical chart of accounts management with colon-separated levels
 - Transaction templates for recurring entries
 - Financial reporting including balance sheets
 - German language UI with English documentation
@@ -17,7 +17,7 @@ Tideland Ledger is a comprehensive accounting system that provides:
 ## Technology Stack
 
 - **Elixir** with **Phoenix Framework** for the web application
-- **Ecto** ORM with **SQLite** for data persistence
+- **Ecto** ORM with **SQLite** for data persistence (designed for future PostgreSQL support)
 - **Phoenix LiveView** for interactive UI components
 - **Tailwind CSS** for styling
 - **Tideland Auth** for authentication and authorization
@@ -43,7 +43,7 @@ ledger/
 
 ### Core Functionality
 
-- **Account Management**: Maintain chart of accounts with proper account types
+- **Account Management**: Maintain hierarchical chart of accounts using colon separators (e.g., "Einnahmen : Arbeit : Tideland")
 - **Transaction Entry**: Create and post journal entries with validation
 - **Templates**: Define and use templates for recurring transactions
 - **Reporting**: Generate balance sheets and account reports
@@ -233,7 +233,7 @@ This project is licensed under the Apache License 2.0 - see the LICENSE file for
 ## Acknowledgments
 
 - Built as a learning project for the Elixir ecosystem
-- Inspired by traditional double-entry bookkeeping principles
+- Inspired by simplified ledger-style bookkeeping principles
 - Thanks to the Elixir and Phoenix communities
 
 ## Support

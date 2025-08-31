@@ -122,31 +122,31 @@ This document provides a formal specification for the Tideland Ledger system, co
 
 ## 4. Accounting Domain Requirements
 
-### REQ-008: Double-Entry Bookkeeping
+### REQ-008: Simplified Ledger-Style Bookkeeping
 
-**Requirement**: Implement pure double-entry bookkeeping without enforced account types.
+**Requirement**: Implement simplified ledger-style bookkeeping.
 
 **Constraints**:
 
-- Every transaction must balance (sum to zero)
-- Minimum two positions per transaction
-- No system-enforced account types (assets, liabilities, etc.)
+- No double-entry with debit/credit
+- Simple income and expense tracking
+- No system-enforced account types
 
-**Solution**: Transaction model with positions, zero-sum validation
+**Solution**: Transaction model with positions, simplified validation
 
-**Rationale**: Pure double-entry is the foundation of all accounting systems. Not enforcing account types provides flexibility for different accounting standards (SKR03, SKR04, etc.).
+**Rationale**: Simplified ledger style provides ease of use for basic bookkeeping needs without the complexity of double-entry accounting.
 
 ### REQ-009: Account Structure
 
-**Requirement**: Hierarchical account structure without enforced types.
+**Requirement**: Hierarchical account structure using string-based naming.
 
 **Constraints**:
 
-- Support various numbering schemes (SKR03, SKR04)
-- Account meaning derived from numbering convention
+- Accounts are strings with hierarchy indicated by colons
+- Separator normalized to " : " (space-colon-space)
 - Must support parent-child relationships
 
-**Solution**: Path-based account hierarchy (e.g., "1000 : 1200 : Bank - Checking")
+**Solution**: String-based account hierarchy (e.g., "Einnahmen : Arbeit : Tideland")
 
 **Rationale**: Path-based structure is self-documenting and eliminates the need for separate parent ID tracking. It mirrors file system paths, making it intuitive.
 

@@ -2,7 +2,7 @@
 
 ## 1. Project Overview
 
-The Tideland Ledger is a web-based double-entry bookkeeping system implemented in Elixir. The primary goals are:
+The Tideland Ledger is a web-based simplified ledger-style bookkeeping system implemented in Elixir. The primary goals are:
 
 - Learning the Elixir language and ecosystem
 - Creating a practical, maintainable ledger system
@@ -22,16 +22,20 @@ The Tideland Ledger is a web-based double-entry bookkeeping system implemented i
 
 ### 2.2 Ledger Functionality
 
-- Double-entry bookkeeping system
+- Simplified ledger-style bookkeeping (not double-entry with debit/credit)
 - Chart of accounts management (maintainable online)
-- Account hierarchy support without enforced types
-- Account meaning determined by numbering scheme and naming conventions
+- Hierarchical account system using colon separators
+  - Accounts are strings with hierarchy indicated by colons
+  - Separator normalized to " : " (space-colon-space) for readability
+  - Example hierarchies: "Einnahmen : Arbeit : Tideland", "Ausgaben : Anschaffungen : Technik"
+  - Full-text search capability across accounts
+  - Filtering by hierarchy level
+- No SKR03/SKR04 or similar chart of accounts standards
 - Transaction entry and posting
 - Transaction templates for recurring entries (maintainable online)
 - Templates must validate against existing accounts
 - Template positions use fractions of total sum as standard
 - Optional default totals for templates
-- Transaction validation ensuring debits equal credits
 - Journal entries with proper audit trail
 
 ### 2.3 Financial Reporting
@@ -63,16 +67,17 @@ The Tideland Ledger is a web-based double-entry bookkeeping system implemented i
 
 ### 3.2 Architecture Requirements
 
-- Clean, maintainable code structure
-- Comprehensive documentation
+- Clean, maintainable code structure with clear naming
+- Comprehensive documentation including semantic comments for modules, types, and functions
 - Test-driven development approach
 - Domain-driven design principles
 - Separation of concerns (contexts, schemas, views)
 
 ### 3.3 Database Requirements
 
-- SQLite for data persistence
-- Proper schema design for double-entry bookkeeping
+- SQLite for initial data persistence with design allowing future PostgreSQL support
+- Database abstraction layer to facilitate future database system changes
+- Proper schema design for simplified ledger-style bookkeeping
 - Transaction integrity and ACID compliance
 - Efficient indexing for reporting queries
 - Migration support for schema evolution
@@ -133,16 +138,16 @@ The Tideland Ledger is a web-based double-entry bookkeeping system implemented i
 
 1. Project setup and structure
 2. Integration with Tideland Auth service
-3. Basic account and transaction models
+3. Basic account and transaction models with hierarchical support
 4. Amount type implementation
 5. Simple transaction entry
 
 ### Phase 2: Core Features
 
-1. Double-entry validation
+1. Transaction validation for ledger style
 2. Transaction templates
-3. Basic balance sheet
-4. Account management UI
+3. Basic reports and account summaries
+4. Account management UI with hierarchy navigation
 5. Transaction history views
 
 ### Phase 3: Enhanced Features
@@ -162,10 +167,11 @@ The Tideland Ledger is a web-based double-entry bookkeeping system implemented i
 
 ### 7.2 Accounting Standards
 
-- **Accounting principles**: Pure double-entry bookkeeping
-  - No enforced account types at system level
-  - Account structure follows chosen numbering scheme (e.g., SKR03, SKR04 for German accounting)
-  - Reporting logic interprets accounts based on their codes
+- **Accounting principles**: Simplified ledger-style bookkeeping
+  - No double-entry with debit/credit
+  - No SKR03, SKR04 or similar chart of accounts standards
+  - Hierarchical account structure using colon separators
+  - Account meaning determined by hierarchy and naming
 - **German bookkeeping**: Yes - system designed for German use
 - **Tax reporting**: Individual positions must be markable as tax-relevant
   - Example: When splitting invoices, distinguish between tax-deductible services (craftsmen) and materials
@@ -185,8 +191,8 @@ The Tideland Ledger is a web-based double-entry bookkeeping system implemented i
 
 ## 8. Success Criteria
 
-- Functional double-entry bookkeeping system
-- Clean, well-documented codebase
+- Functional simplified ledger-style bookkeeping system
+- Clean, well-documented codebase with semantic comments
 - Comprehensive test coverage
 - Intuitive user interface
 - Efficient performance for typical use cases
@@ -194,7 +200,7 @@ The Tideland Ledger is a web-based double-entry bookkeeping system implemented i
 
 ## 9. Constraints and Assumptions
 
-- Single SQLite database (no distributed system initially)
+- SQLite database initially with design supporting future PostgreSQL migration
 - Web-based only (no mobile app)
 - Modern browser support only
 - Development by experienced programmer new to Elixir

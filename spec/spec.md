@@ -14,11 +14,54 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 
+## Table of Contents
+
+1. [Overview](#1-overview)
+2. [How to Read This Specification](#2-how-to-read-this-specification)
+3. [Core System Requirements](#3-core-system-requirements)
+4. [Accounting Domain Requirements](#4-accounting-domain-requirements)
+5. [User Interface Requirements](#5-user-interface-requirements)
+6. [Security Requirements](#6-security-requirements)
+7. [Data Management Requirements](#7-data-management-requirements)
+8. [Configuration Requirements](#8-configuration-requirements)
+9. [Development Requirements](#9-development-requirements)
+10. [Related Documents](#10-related-documents)
+
 ## 1. Overview
 
 This document provides a formal specification for the Tideland Ledger system, consolidating all requirements with their constraints, chosen solutions, and rationales for each decision.
 
-## 2. Core System Requirements
+## 2. How to Read This Specification
+
+This specification is organized as a comprehensive reference for the Tideland Ledger system. Each requirement follows a consistent format:
+
+- **Requirement**: The core need to be addressed
+- **Constraints**: Limitations and boundaries that shape the solution
+- **Solution**: The chosen approach to meet the requirement
+- **Rationale**: The reasoning behind the chosen solution
+
+### Document Structure
+
+1. **Core System Requirements** (REQ-001 to REQ-007): Foundational technology choices and architecture
+2. **Accounting Domain Requirements** (REQ-008 to REQ-018): Business logic and bookkeeping rules
+3. **User Interface Requirements** (REQ-019 to REQ-020): User experience and interaction design
+4. **Security Requirements** (REQ-021): Authentication and authorization
+5. **Additional Requirements**: Testing, documentation, and operational concerns
+
+### Related Design Documents
+
+For detailed implementation guidance, refer to these companion documents:
+
+- `persistence-design.md`: Database schema, indexes, and data access patterns
+- `wui-design.md`: LiveView components and user interface implementation
+- `dsl-design.md`: Domain-specific language for account and transaction definitions
+- `configuration-design.md`: TOML configuration structure and settings
+- `ledger-concepts.md`: Accounting principles and domain concepts
+- `glossary.md`: Canonical terminology with English/German translations
+- `impexp-design.md`: Import/export specifications and data formats
+- `review-comments.md`: External review feedback and responses
+
+## 3. Core System Requirements
 
 ### REQ-001: Programming Language and Framework
 
@@ -370,7 +413,7 @@ This document provides a formal specification for the Tideland Ledger system, co
 
 **Rationale**: Users need clear guidance when errors occur. Technical details belong in logs, not user interfaces.
 
-## 9. Deployment Requirements
+## 9. Development Requirements
 
 ### REQ-025: Package Distribution
 
@@ -474,13 +517,82 @@ This document provides a formal specification for the Tideland Ledger system, co
 
 **Rationale**: SQLite's backup command ensures consistent backups even during writes.
 
-## 12. Summary
+## 12. Testing Strategy
+
+### REQ-032: Comprehensive Test Coverage
+
+**Requirement**: Implement comprehensive testing for all system components.
+
+**Constraints**:
+
+- Property-based tests for amount calculations
+- Golden file tests for report outputs
+- LiveView interaction tests
+- Database constraint tests
+
+**Solution**: ExUnit with property testing and golden files
+
+**Rationale**: Financial systems require high confidence. Property tests catch edge cases, golden files ensure report consistency.
+
+### Test Categories
+
+1. **Unit Tests**: Pure functions, especially Amount calculations
+2. **Integration Tests**: Database operations, Ecto schemas
+3. **Property Tests**: Amount distribution, rounding behavior
+4. **LiveView Tests**: UI interactions, form validation
+5. **Golden File Tests**: Report outputs, export formats
+
+### REQ-033: Test Data Management
+
+**Requirement**: Consistent test data for development and testing.
+
+**Constraints**:
+
+- Reproducible test scenarios
+- German-language test data
+- Realistic account hierarchies
+
+**Solution**: Seed data scripts with realistic German bookkeeping scenarios
+
+**Rationale**: Consistent test data enables reliable testing and demonstrations.
+
+## 13. Amount and Precision Policy
+
+### REQ-034: Amount Storage and Precision
+
+**Requirement**: Precise financial calculations without rounding errors.
+
+**Constraints**:
+
+- Fixed 2-decimal precision for EUR
+- No floating-point arithmetic
+- Consistent rounding rules
+
+**Solution**: Scaled integer storage (cents), banker's rounding for divisions
+
+**Rationale**: Storing amounts as integers eliminates floating-point errors. Banker's rounding ensures fair distribution.
+
+### REQ-035: Amount Distribution
+
+**Requirement**: Fair distribution when splitting amounts.
+
+**Constraints**:
+
+- Sum of parts must equal original
+- No loss of cents
+- Predictable distribution
+
+**Solution**: Distribution function that adds remainder to last position
+
+**Rationale**: Common pattern in financial systems. Adding remainder to last position is simple and predictable.
+
+## 14. Summary
 
 This specification defines a focused, well-architected bookkeeping system that:
 
 1. **Leverages Elixir's strengths** - Fault tolerance, functional programming
 2. **Keeps things simple** - SQLite, no JavaScript frameworks, flat design
-3. **Respects accounting principles** - Pure double-entry, flexible account structures
+3. **Respects accounting principles** - Simplified ledger style, flexible account structures
 4. **Serves German users** - German UI, tax tracking, standard reports
 5. **Enables learning** - Clean code, good documentation, standard patterns
 

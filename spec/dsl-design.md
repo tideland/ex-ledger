@@ -78,27 +78,27 @@ Date.parse("2024-01-15") = 2024-01-15
 ### 2.3 Account Path
 
 ```
-# Account paths using codes and names
+# Account paths using hierarchical names
 AccountPath = String with " : " delimiter
-AccountPath.parse("1000 : 1200 : Checking") = valid
-AccountPath.parent("1000 : 1200 : Checking") = "1000 : 1200"
-AccountPath.name("1000 : 1200 : Checking") = "Checking"
+AccountPath.parse("Vermögen : Bank : Girokonto") = valid
+AccountPath.parent("Vermögen : Bank : Girokonto") = "Vermögen : Bank"
+AccountPath.name("Vermögen : Bank : Girokonto") = "Girokonto"
 ```
 
-## 4. Account Definition DSL
+## 3. Account Definition DSL
 
-### 3.1 Basic Account Definition
+### 3.1 Individual Account Creation
 
 ```
 # Basic account definition
-define_account "1200" do
-  name: "Bank - Checking"
+define_account "Vermögen : Bank : Girokonto" do
+  name: "Girokonto"
   description: "Main business checking account"
   active: true
 end
 
-define_account "4200" do
-  name: "Office Rent"
+define_account "Ausgaben : Büro : Miete" do
+  name: "Büro Miete"
   description: "Monthly office rent"
   active: true
 end
@@ -119,35 +119,37 @@ define_accounts do
     end
   end
 
-  group "0400-0999" do  # Fixed assets
-    account "0620" with name: "Equipment", description: "Office equipment"
-    account "0650" with name: "Furniture", description: "Office furniture"
+  group "Vermögen : Anlagen" do  # Fixed assets
+    account "Vermögen : Anlagen : Ausstattung" with description: "Office equipment"
+    account "Vermögen : Anlagen : Möbel" with description: "Office furniture"
   end
 
-  group "3000-3999" do  # Liabilities
-    account "3000" with name: "Accounts Payable", description: "Trade creditors"
-    account "3100" with name: "Credit Card Payable", description: "Credit card liabilities"
+  group "Verbindlichkeiten" do  # Liabilities
+    account "Verbindlichkeiten : Lieferanten" with description: "Trade creditors"
+    account "Verbindlichkeiten : Kreditkarten" with description: "Credit card liabilities"
   end
 
-  group "4000-4999" do  # Operating expenses
-    account "4200" with name: "Rent", description: "Office rent"
-    account "4300" with name: "Utilities", description: "Electricity, water, etc."
+  group "Ausgaben : Betrieb" do  # Operating expenses
+    account "Ausgaben : Betrieb : Miete" with description: "Office rent"
+    account "Ausgaben : Betrieb : Nebenkosten" with description: "Electricity, water, etc."
   end
 end
 ```
 
 ## 5. Transaction DSL
 
-### 4.1 Simple Transaction
+## 4. Transaction Entry DSL
+
+### 4.1 Basic Transaction Syntax
 
 ```
-# Simple transaction syntax - using account codes
+# Simple transaction syntax - using hierarchical account names
 transaction do
   date: 2024-01-15
   description: "Purchase office supplies"
 
-  position "4100", Amount.new(50.00)   # Office Supplies (debit)
-  position "1200", Amount.new(-50.00)  # Bank - Checking (credit)
+  position "Ausgaben : Büro : Material", Amount.new(50.00)
+  position "Vermögen : Bank : Girokonto", Amount.new(-50.00)
 end
 
 # Or with implicit conversion
@@ -155,12 +157,12 @@ transaction do
   date: 2024-01-15
   description: "Purchase office supplies"
 
-  position "4100", 50.00   # Office Supplies (debit)
-  position "1200", -50.00  # Bank - Checking (credit)
+  position "Ausgaben : Büro : Material", 50.00
+  position "Vermögen : Bank : Girokonto", -50.00
 end
 ```
 
-### 4.2 Multi-Position Transaction
+### 4.2 Multi-Position Transactions
 
 ```
 # Multi-position transaction
@@ -168,13 +170,15 @@ transaction do
   date: 2024-01-20
   description: "Client payment with fees"
 
-  position "1200", +970.00   # Bank - Checking
-  position "4900", +30.00    # Bank Fees
-  position "1400", -1000.00  # Accounts Receivable
+  position "Vermögen : Bank : Girokonto", +970.00
+  position "Ausgaben : Bank : Gebühren", +30.00
+  position "Vermögen : Forderungen", -1000.00
 end
 ```
 
 ### 4.3 Tax-Relevant Positions
+
+### 4.3 Tax Relevance Tagging
 
 ```
 # Tax relevance tagging
@@ -182,92 +186,120 @@ transaction do
   date: 2024-02-01
   description: "Craftsman invoice - renovation"
 
-  position "4500", +800.00 do  # Renovation Labor
+  position "Ausgaben : Renovierung : Arbeit", +800.00 do
     tax_relevant: true
     memo: "Deductible craftsman services"
   end
 
-  position "4510", +200.00 do  # Renovation Materials
+  position "Ausgaben : Renovierung : Material", +200.00 do
     tax_relevant: false
     memo: "Non-deductible materials"
   end
 
-  position "1200", -1000.00  # Bank - Checking
+  position "Vermögen : Bank : Girokonto", -1000.00
 end
 ```
 
 ## 6. Transaction Templates DSL
 
-### 5.1 Fixed Amount Template
+### 5.1 Template Versioning
 
 ```
-# Fixed amount template
-template "Monthly Rent" do
+# Templates are immutable - new versions must be created for changes
+template "Monthly Rent", version: 1 do
   default_total: 1500.00
   validate_accounts: true
 
-  position "4200", +1500.00  # Office Rent
-  position "1200", -1500.00  # Bank - Checking
+  position "Ausgaben : Büro : Miete", +1500.00
+  position "Vermögen : Bank : Girokonto", -1500.00
+end
+
+# Creating a new version when rent changes
+template "Monthly Rent", version: 2 do
+  default_total: 1600.00  # Rent increased
+  validate_accounts: true
+
+  position "Ausgaben : Büro : Miete", +1600.00
+  position "Vermögen : Bank : Girokonto", -1600.00
 end
 ```
 
-### 5.2 Variable Amount Template
+### 5.2 Fixed Amount Template
 
 ```
-# Template with parameter
-template "Office Supplies Purchase" do
+# Fixed amount template with explicit version
+template "Office Rent", version: 1 do
+  default_total: 1500.00
+  validate_accounts: true
+
+  position "Ausgaben : Büro : Miete", +1500.00
+  position "Vermögen : Bank : Girokonto", -1500.00
+end
+```
+
+### 5.3 Variable Amount Template
+
+```
+# Template with parameter and version
+template "Office Supplies Purchase", version: 1 do
   parameter :amount  # Can be Amount or numeric
   validate_accounts: true
 
-  position "4100", +amount  # Office Supplies
-  position "1200", -amount  # Bank - Checking
+  position "Ausgaben : Büro : Material", +amount
+  position "Vermögen : Bank : Girokonto", -amount
 end
 ```
 
-### 5.3 Fraction-Based Template (Standard Approach)
+### 5.4 Fraction-Based Template (Standard Approach)
 
 ```
 # Template with fractions (percentage-based distribution)
-template "Monthly Rent with Utilities" do
+template "Monthly Rent with Utilities", version: 1 do
   parameter :total_amount  # Amount type
   default_total: 2000.00
   validate_accounts: true
 
   # Using fractions as the standard approach
-  position "4200", fraction: 0.80   # Office Rent
-  position "4300", fraction: 0.15   # Utilities
-  position "4400", fraction: 0.05   # Maintenance
-  position "1200", fraction: -1.00  # Bank - Checking
+  position "Ausgaben : Büro : Miete", fraction: 0.80
+  position "Ausgaben : Büro : Nebenkosten", fraction: 0.15
+  position "Ausgaben : Büro : Wartung", fraction: 0.05
+  position "Vermögen : Bank : Girokonto", fraction: -1.00
 end
 ```
 
-### 5.4 Complex Template with Distribution
+### 5.5 Complex Template with Distribution
 
 ```
 # Template with automatic distribution
-template "Split Invoice Three Ways" do
+template "Split Invoice Three Ways", version: 1 do
   parameter :amount
   parameter :account_from
   validate_accounts: true
 
   # Automatic distribution using fractions
-  position "4801", fraction: 1/3  # Partner A Share
-  position "4802", fraction: 1/3  # Partner B Share
-  position "4803", fraction: 1/3  # Partner C Share
+  position "Ausgaben : Partner : A", fraction: 1/3
+  position "Ausgaben : Partner : B", fraction: 1/3
+  position "Ausgaben : Partner : C", fraction: 1/3
   position account_from, fraction: -1.00
 end
 ```
 
-### 5.5 Using Templates
+### 5.6 Using Templates
 
 ```
-# Fixed template
+# Fixed template - uses latest version by default
 apply_template "Monthly Rent" do
   date: 2024-02-01
   description: "February rent payment"
 end
 
-# Variable template
+# Using specific version
+apply_template "Monthly Rent", version: 1 do
+  date: 2024-01-01
+  description: "January rent payment (old rate)"
+end
+
+# Variable template with latest version
 apply_template "Office Supplies Purchase" do
   date: 2024-02-05
   description: "Printer paper and toner"
@@ -280,41 +312,125 @@ apply_template "Split Invoice Three Ways" do
   date: 2024-02-10
   description: "Shared consulting expense"
   amount: 1000.00
-  account_from: "1200"  # Bank - Checking
+  account_from: "Vermögen : Bank : Girokonto"
+end
+```
+
+## 6. Canonical Examples
+
+### 6.1 Salary Entry
+
+```
+# Monthly salary payment
+entry do
+  date: 2024-02-28
+  description: "Gehalt Februar 2024"
+
+  position "Einnahmen : Arbeit : Tideland", -3500.00
+  position "Vermögen : Bank : Girokonto", +3500.00
+end
+```
+
+### 6.2 Grocery Shopping
+
+```
+# Grocery purchase
+entry do
+  date: 2024-02-15
+  description: "Einkauf Supermarkt"
+
+  position "Ausgaben : Lebensmittel", +87.43
+  position "Vermögen : Bargeld", -87.43
+end
+```
+
+### 6.3 Rent Payment
+
+```
+# Monthly rent
+entry do
+  date: 2024-02-01
+  description: "Miete Februar"
+
+  position "Ausgaben : Wohnung : Miete", +1200.00
+  position "Vermögen : Bank : Girokonto", -1200.00
+end
+```
+
+### 6.4 Internal Transfer
+
+```
+# Transfer between accounts
+entry do
+  date: 2024-02-10
+  description: "Überweisung Sparkonto"
+
+  position "Vermögen : Bank : Sparkonto", +500.00
+  position "Vermögen : Bank : Girokonto", -500.00
+end
+```
+
+### 6.5 Loan Payment
+
+```
+# Loan payment with interest
+entry do
+  date: 2024-02-15
+  description: "Kredittilgung"
+
+  position "Ausgaben : Kredit : Tilgung", +400.00
+  position "Ausgaben : Kredit : Zinsen", +50.00
+  position "Vermögen : Bank : Girokonto", -450.00
+end
+```
+
+### 6.6 Tax Payment
+
+```
+# Quarterly tax payment
+entry do
+  date: 2024-03-31
+  description: "Umsatzsteuervorauszahlung Q1/2024"
+  tax_relevant: true
+
+  position "Ausgaben : Steuern : Umsatzsteuer", +2500.00
+  position "Vermögen : Bank : Girokonto", -2500.00
 end
 ```
 
 ## 7. Query DSL
 
-### 6.1 Account Balance Queries
+### 7.1 Account Balance Queries
 
 ```
 # Single account balance
-balance_of "1200"  # Bank - Checking
+balance_of "Vermögen : Bank : Girokonto"
 => 12,500.00
 
-# Multiple accounts by code range
-balance_of accounts matching "12*"
-=> {"1200" => 12,500.00,  # Bank - Checking
-    "1210" => 25,000.00}  # Bank - Savings
+# Multiple accounts by hierarchy
+balance_of accounts starting_with "Vermögen : Bank"
+=> {"Vermögen : Bank : Girokonto" => 12,500.00,
+    "Vermögen : Bank : Sparkonto" => 25,000.00}
 
 # Balance at specific date
-balance_of "1200" at: 2024-01-31
+balance_of "Vermögen : Bank : Girokonto" at: 2024-01-31
 => 8,200.00
 ```
+
+### 7.2 Report Generation
 
 ### 6.2 Transaction Queries
 
 ```
 # All transactions for an account
-transactions_for "1200" do  # Bank - Checking
+transactions_for "Vermögen : Bank : Girokonto" do
   from: 2024-01-01
   to: 2024-01-31
 end
 
 # Transactions matching criteria
 transactions where do
-  account: "4*"  # All expense accounts
+  account: starts_with("Ausgaben")  # All expense accounts
   amount: greater_than(100.00)
   date: in_month(2024, 1)
 end
@@ -323,14 +439,14 @@ end
 ### 6.3 Report Queries
 
 ```
-# Balance sheet (using account code ranges)
+# Balance sheet
 balance_sheet at: 2024-01-31
 
 # Trial balance
 trial_balance at: 2024-01-31
 
 # Account activity
-activity_report for: "1200" do  # Bank - Checking
+activity_report for: "Vermögen : Bank : Girokonto" do
   from: 2024-01-01
   to: 2024-01-31
   include_running_balance: true

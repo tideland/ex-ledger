@@ -260,7 +260,25 @@ RULE no_void_modifications {
 
 RULE minimum_transaction_lines {
   FOR EACH transaction
-  ASSERT COUNT(transaction_lines) >= 2
+  ASSERT COUNT(transaction_lines) >= 2  -- Even simplified ledger needs at least 2 lines
+}
+
+RULE transaction_must_balance {
+  FOR EACH transaction
+  ASSERT SUM(transaction_lines.amount) = 0  -- All transactions must balance to zero
+}
+
+RULE period_lock_enforcement {
+  FOR EACH transaction
+  WHERE status = 'posted'
+  ASSERT transaction_date NOT IN locked_periods
+  UNLESS current_user.role = 'admin'
+}
+
+RULE audit_trail_requirement {
+  FOR EACH INSERT, UPDATE, DELETE
+  ON accounts, transactions, transaction_lines
+  CREATE audit_log entry
 }
 ```
 
@@ -347,6 +365,37 @@ CREATE TABLE transaction_lines (
 CREATE INDEX idx_lines_transaction ON transaction_lines(transaction_id);
 CREATE INDEX idx_lines_account ON transaction_lines(account_id);
 CREATE INDEX idx_lines_tax_relevant ON transaction_lines(tax_relevant);
+
+-- Audit log table
+CREATE TABLE audit_log (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    table_name TEXT NOT NULL,
+    record_id INTEGER NOT NULL,
+    action TEXT NOT NULL CHECK (action IN ('INSERT', 'UPDATE', 'DELETE')),
+    old_values TEXT,  -- JSON representation
+    new_values TEXT,  -- JSON representation
+    user_id INTEGER NOT NULL,
+    timestamp DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE RESTRICT
+);
+
+CREATE INDEX idx_audit_table_record ON audit_log(table_name, record_id);
+CREATE INDEX idx_audit_timestamp ON audit_log(timestamp);
+CREATE INDEX idx_audit_user ON audit_log(user_id);
+
+-- Period locks table
+CREATE TABLE period_locks (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    period_type TEXT NOT NULL CHECK (period_type IN ('month', 'quarter', 'year')),
+    period_start DATE NOT NULL,
+    period_end DATE NOT NULL,
+    locked_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    locked_by INTEGER NOT NULL,
+    FOREIGN KEY (locked_by) REFERENCES users(id) ON DELETE RESTRICT,
+    UNIQUE(period_type, period_start)
+);
+
+CREATE INDEX idx_period_locks_dates ON period_locks(period_start, period_end);
 
 -- Templates table
 CREATE TABLE templates (
@@ -484,6 +533,19 @@ BEGIN
         THEN RAISE(ABORT, 'Transaction is not balanced')
     END;
 END;
+
+-- Minimum transaction lines check
+CREATE TRIGGER check_minimum_lines
+BEFORE UPDATE ON transactions
+WHEN NEW.status = 'posted' AND OLD.status = 'draft'
+BEGIN
+    SELECT CASE
+        WHEN (SELECT COUNT(*)
+              FROM transaction_lines
+              WHERE transaction_id = NEW.id) < 2
+        THEN RAISE(ABORT, 'Transaction must have at least 2 lines')
+    END;
+END;
 ```
 
 ### 2.3 Views for Reporting
@@ -585,7 +647,79 @@ HAVING imbalance != 0;
 
 ---
 
-## 3. Ecto Implementation
+## 3. SQLite Configuration and Performance
+
+### 3.1 Durability Settings
+
+```sql
+-- Enable Write-Ahead Logging for better concurrency
+PRAGMA journal_mode = WAL;
+
+-- Set synchronous to NORMAL for good durability/performance balance
+PRAGMA synchronous = NORMAL;
+
+-- Enable foreign key constraints
+PRAGMA foreign_keys = ON;
+
+-- Set busy timeout to 5 seconds
+PRAGMA busy_timeout = 5000;
+
+-- Optimize for typical ledger workload
+PRAGMA temp_store = MEMORY;
+PRAGMA mmap_size = 268435456;  -- 256MB memory-mapped I/O
+```
+
+### 3.2 Performance Indexes
+
+```sql
+-- Additional indexes for common query patterns
+
+-- For account hierarchy queries
+CREATE INDEX idx_accounts_path ON accounts(code);
+
+-- For date range queries
+CREATE INDEX idx_transactions_date_status ON transactions(transaction_date, status);
+
+-- For account balance calculations
+CREATE INDEX idx_lines_account_amount ON transaction_lines(account_id, amount);
+
+-- For tax reporting
+CREATE INDEX idx_lines_tax_date ON transaction_lines(tax_relevant, transaction_id);
+```
+
+### 3.3 Backup Strategy
+
+```sql
+-- Online backup using SQLite backup API
+-- This should be implemented in Elixir using sqlite3 library
+
+-- Manual backup command
+PRAGMA wal_checkpoint(TRUNCATE);
+.backup '/path/to/backup/ledger_backup.db'
+
+-- For point-in-time recovery, combine with:
+-- 1. Regular full backups (daily)
+-- 2. WAL file archiving (continuous)
+-- 3. Backup rotation policy (keep 30 days)
+```
+
+### 3.4 Maintenance Operations
+
+```sql
+-- Periodic maintenance (weekly)
+PRAGMA optimize;
+PRAGMA wal_checkpoint(TRUNCATE);
+VACUUM;
+ANALYZE;
+
+-- Check database integrity (monthly)
+PRAGMA integrity_check;
+PRAGMA foreign_key_check;
+```
+
+---
+
+## 4. Ecto Implementation
 
 ### 3.1 Schema Definitions
 

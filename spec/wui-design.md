@@ -98,19 +98,116 @@ This document describes the web user interface design for the Tideland Ledger ap
 /* Flat button style for vertical menu items */
 .menu-item {
   display: block;
+  width: 100%;
   padding: 1rem;
   text-align: left;
-  text-decoration: none;
-  border-bottom: 1px solid var(--border-color);
-  background: var(--background-color);
-  width: 100%;
+  border: none;
+  background: none;
+  cursor: pointer;
+}
+
+.menu-item:hover {
+  background-color: var(--border-color);
+}
+
+.menu-item.active {
+  background-color: var(--primary-color);
+  color: var(--background-color);
+}
+```
+
+## 4. LiveView State Management
+
+### 4.1 Entry Creation State Chart
+
+```
+┌─────────────┐     ┌─────────────┐     ┌─────────────┐
+│    Draft    │────▶│  Validated  │────▶│   Posted    │
+│   (Entwurf) │     │ (Geprüft)   │     │  (Gebucht)  │
+└─────────────┘     └─────────────┘     └─────────────┘
+       │                    │                    │
+       │                    │                    │
+       ▼                    ▼                    ▼
+┌─────────────┐     ┌─────────────┐     ┌─────────────┐
+│   Editing   │     │    Error    │     │   Void      │
+│ (Bearbeiten)│     │   (Fehler)  │     │ (Storniert) │
+└─────────────┘     └─────────────┘     └─────────────┘
+```
+
+### 4.2 LiveView Component States
+
+```elixir
+# Transaction entry LiveView states
+defmodule LedgerWeb.TransactionLive do
+  use LedgerWeb, :live_view
+
+  @impl true
+  def mount(_params, _session, socket) do
+    {:ok, assign(socket,
+      state: :draft,
+      transaction: %Transaction{},
+      errors: [],
+      accounts: list_accounts()
+    )}
+  end
+
+  # State transitions
+  def handle_event("validate", %{"transaction" => params}, socket) do
+    case validate_transaction(params) do
+      {:ok, transaction} ->
+        {:noreply, assign(socket, state: :validated, transaction: transaction)}
+      {:error, errors} ->
+        {:noreply, assign(socket, state: :error, errors: errors)}
+    end
+  end
+
+  def handle_event("post", _params, socket) do
+    case post_transaction(socket.assigns.transaction) do
+      {:ok, transaction} ->
+        {:noreply,
+         socket
+         |> assign(state: :posted, transaction: transaction)
+         |> put_flash(:info, "Buchung erfolgreich")
+         |> push_redirect(to: Routes.transaction_path(socket, :show, transaction))}
+      {:error, errors} ->
+        {:noreply, assign(socket, state: :error, errors: errors)}
+    end
+  end
+end
+```
+
+### 4.3 Form Validation Flow
+
+```
+User Input ──▶ LiveView Validation ──▶ Visual Feedback
+    │                  │                      │
+    ▼                  ▼                      ▼
+┌─────────┐    ┌──────────────┐      ┌──────────────┐
+│ Typing  │    │ Debounce     │      │ Field State  │
+│         │    │ (200ms)      │      │ ✓ Valid      │
+│         │    │              │      │ ✗ Invalid    │
+│         │    │              │      │ ⏳ Checking   │
+└─────────┘    └──────────────┘      └──────────────┘
+```
+
+## 5. Page Layouts
+
+### 5.1 Dashboard (Übersicht)
+
+padding: 1rem;
+text-align: left;
+text-decoration: none;
+border-bottom: 1px solid var(--border-color);
+background: var(--background-color);
+width: 100%;
 }
 
 .menu-item:hover,
 .menu-item.active {
-  background: var(--primary-color);
-  color: var(--background-color);
+background: var(--primary-color);
+color: var(--background-color);
 }
+
 ```
 
 ## 4. Page Designs
@@ -122,21 +219,23 @@ This document describes the web user interface design for the Tideland Ledger ap
 **Layout**:
 
 ```
+
 ┌─────────────────────────────┬─────────────────────────────┐
-│      Kontensalden          │      Letzte Buchungen       │
-│                            │                              │
-│ Bank: 12.500,00 €         │ 15.01. Miete      -1.500,00 │
-│ Kasse: 250,00 €           │ 14.01. Material     -125,50 │
-│ Forderungen: 5.000,00 €   │ 13.01. Zahlung    +2.000,00 │
-│                            │                              │
-│ [Alle Konten anzeigen]     │ [Alle Buchungen anzeigen]   │
+│ Kontensalden │ Letzte Buchungen │
+│ │ │
+│ Bank: 12.500,00 € │ 15.01. Miete -1.500,00 │
+│ Kasse: 250,00 € │ 14.01. Material -125,50 │
+│ Forderungen: 5.000,00 € │ 13.01. Zahlung +2.000,00 │
+│ │ │
+│ [Alle Konten anzeigen] │ [Alle Buchungen anzeigen] │
 └─────────────────────────────┴─────────────────────────────┘
 
 ┌─────────────────────────────────────────────────────────────┐
-│                    Schnellaktionen                          │
-│                                                             │
-│ [Neue Buchung] [Vorlage anwenden] [Bericht erstellen]     │
+│ Schnellaktionen │
+│ │
+│ [Neue Buchung] [Vorlage anwenden] [Bericht erstellen] │
 └─────────────────────────────────────────────────────────────┘
+
 ```
 
 **LiveView Features**:
@@ -152,41 +251,47 @@ This document describes the web user interface design for the Tideland Ledger ap
 **Layout**:
 
 ```
+
 ┌─────────────────────────────────────────────────────────────┐
-│                    Neue Buchung erstellen                   │
+│ Neue Buchung erstellen │
 ├─────────────────────────────────────────────────────────────┤
-│ Datum: [____-__-__]          Belegnr: [_______________]    │
-│                                                             │
+│ Datum: [____-__-__] Belegnr: [_______________] │
+│ │
 │ Beschreibung: [____________________________________________]│
-│                                                             │
-│ Vorlage: [Keine ▼]                                         │
+│ │
+│ Vorlage: [Keine ▼] Version: [Aktuelle ▼] │
+│ │
+│ Hinweis: Bei Auswahl einer Vorlage werden verfügbare │
+│ Versionen im Versions-Dropdown angezeigt. │
 ├─────────────────────────────────────────────────────────────┤
-│ Positionen:                                                 │
-│                                                             │
-│ Konto                                          Betrag      │
-│ [_________________________________ ▼]          [_______]   │
-│ [_________________________________ ▼]          [_______]   │
-│                                                             │
-│ [+ Position hinzufügen]                                     │
-│                                                             │
-│ Summe:                                         0,00        │
+│ Positionen: │
+│ │
+│ Konto Betrag │
+│ [_________________________________ ▼] [_______] │
+│ [_________________________________ ▼] [_______] │
+│ │
+│ [+ Position hinzufügen] │
+│ │
+│ Summe: 0,00 │
 ├─────────────────────────────────────────────────────────────┤
-│ [Abbrechen]                              [Buchung speichern]│
+│ [Abbrechen] [Buchung speichern]│
 └─────────────────────────────────────────────────────────────┘
-```
+
+````
 
 **LiveView Features**:
 
 - Real-time sum calculation (must equal zero)
 - Account dropdown with search (shows full hierarchical path)
 - Dynamic position adding/removing
-- Template application updates form
+- Template selection dynamically loads available versions
+- Template application updates form with versioned data
 - Validation messages inline
 - Signed amounts (+/- instead of debit/credit columns)
 
 **Account Entry**:
 
-- Accounts shown as full hierarchical paths: "1000 : 1200 : Bank - Girokonto"
+- Accounts shown as full hierarchical paths: "Vermögen : Bank : Girokonto"
 - Searchable by any part of the path
 - Wide input field to accommodate long paths
 
@@ -197,6 +302,31 @@ This document describes the web user interface design for the Tideland Ledger ap
 - Negative amounts (e.g., -1500,00)
 - No separate debit/credit columns
 
+**Template Version Selection Behavior**:
+
+```elixir
+# When template is selected
+def handle_event("select_template", %{"template" => template_name}, socket) do
+  versions = Ledger.Templates.list_versions(template_name)
+  latest_version = List.first(versions)
+
+  {:noreply,
+   socket
+   |> assign(selected_template: template_name)
+   |> assign(available_versions: versions)
+   |> assign(selected_version: latest_version)
+   |> apply_template_preview(template_name, latest_version)}
+end
+
+# When version is changed
+def handle_event("select_version", %{"version" => version}, socket) do
+  {:noreply,
+   socket
+   |> assign(selected_version: version)
+   |> apply_template_preview(socket.assigns.selected_template, version)}
+end
+````
+
 ### 4.3 Account Management (Konten)
 
 **Purpose**: Manage chart of accounts
@@ -204,19 +334,21 @@ This document describes the web user interface design for the Tideland Ledger ap
 **Layout**:
 
 ```
+
 ┌─────────────────────────────────────────────────────────────┐
-│                         Kontenplan                          │
+│ Kontenplan │
 ├─────────────────────────────────────────────────────────────┤
-│ [Neues Konto]  Suche: [_______________]  [Inaktive zeigen]│
+│ [Neues Konto] Suche: [_______________] [Inaktive zeigen]│
 ├─────────────────────────────────────────────────────────────┤
-│ Kontopfad                                          Saldo   │
+│ Kontopfad Saldo │
 │ ────────────────────────────────────────────────────────── │
-│ 1000 : Kasse                                      250,00 € │
-│ 1000 : 1200 : Bank - Girokonto                 12.500,00 € │
-│ 1000 : 1210 : Bank - Sparkonto                 25.000,00 € │
-│ 1000 : 1400 : Forderungen                       5.000,00 € │
-│ ...                                                        │
+│ Vermögen : Bargeld 250,00 € │
+│ Vermögen : Bank : Girokonto 12.500,00 € │
+│ Vermögen : Bank : Sparkonto 25.000,00 € │
+│ Vermögen : Forderungen 5.000,00 € │
+│ ... │
 └─────────────────────────────────────────────────────────────┘
+
 ```
 
 **Click Actions**:
@@ -229,21 +361,23 @@ This document describes the web user interface design for the Tideland Ledger ap
 **Layout**:
 
 ```
+
 ┌─────────────────────────────────────────────────────────────┐
-│                    Konto: 1200 - Bank                      │
+│ Konto: Vermögen : Bank : Girokonto │
 ├─────────────────────────────────────────────────────────────┤
-│ Aktueller Saldo: 12.500,00 €                              │
-│                                                             │
-│ Kontobewegungen:                                           │
-│                                                             │
-│ Datum      Beschreibung         Soll      Haben    Saldo  │
+│ Aktueller Saldo: 12.500,00 € │
+│ │
+│ Kontobewegungen: │
+│ │
+│ Datum Beschreibung Soll Haben Saldo │
 │ ──────────────────────────────────────────────────────────│
-│ 15.01.24   Miete                        1.500,00  12.500,00│
-│ 14.01.24   Kundenzahlung     2.000,00            14.000,00│
-│ ...                                                        │
-│                                                             │
-│ [Zurück] [Bearbeiten] [Bericht exportieren]               │
+│ 15.01.24 Miete 1.500,00 12.500,00│
+│ 14.01.24 Kundenzahlung 2.000,00 14.000,00│
+│ ... │
+│ │
+│ [Zurück] [Bearbeiten] [Bericht exportieren] │
 └─────────────────────────────────────────────────────────────┘
+
 ```
 
 ### 4.5 Template Management (Vorlagen)
@@ -253,17 +387,29 @@ This document describes the web user interface design for the Tideland Ledger ap
 **Layout**:
 
 ```
+
 ┌─────────────────────────────────────────────────────────────┐
-│                    Buchungsvorlagen                         │
+│ Buchungsvorlagen │
 ├─────────────────────────────────────────────────────────────┤
-│ [Neue Vorlage]                                             │
+│ [Neue Vorlage] │
 ├─────────────────────────────────────────────────────────────┤
-│ Name                        Positionen    Aktionen         │
+│ Name Version Positionen Aktionen │
 │ ────────────────────────────────────────────────────────── │
-│ Monatliche Miete           2              [▶] [✎] [🗑]     │
-│ Büromaterial               2              [▶] [✎] [🗑]     │
-│ Gehaltszahlung             4              [▶] [✎] [🗑]     │
+│ Monatliche Miete v2 2 [▶] [📋] [+] │
+│ Monatliche Miete v1 2 [▶] [📋] │
+│ Büromaterial v1 2 [▶] [📋] [+] │
+│ Gehaltszahlung v3 4 [▶] [📋] [+] │
+│ Gehaltszahlung v2 4 [▶] [📋] │
+│ Gehaltszahlung v1 4 [▶] [📋] │
 └─────────────────────────────────────────────────────────────┘
+
+**Actions**:
+- [▶] = Apply template (opens transaction form with this version)
+- [📋] = Copy to create new version
+- [+] = Only shown for latest version (create next version)
+
+**Note**: Templates cannot be edited or deleted, only new versions created.
+
 ```
 
 ### 4.6 Template Editor
@@ -271,23 +417,33 @@ This document describes the web user interface design for the Tideland Ledger ap
 **Layout**:
 
 ```
+
 ┌─────────────────────────────────────────────────────────────┐
-│                    Vorlage bearbeiten                       │
+│ Neue Vorlage Version erstellen │
 ├─────────────────────────────────────────────────────────────┤
 │ Name: [Monatliche Miete___________________________________]│
-│                                                             │
-│ Standardbetrag: [1.500,00]  □ Betrag variabel             │
-│                                                             │
-│ Positionen:                                                 │
-│                                                             │
-│ Konto                                    Anteil/Betrag     │
-│ [_________________________________ ▼]    [1,00]           │
-│ [_________________________________ ▼]    [-1,00]          │
-│                                                             │
-│ [+ Position]                                               │
-│                                                             │
-│ [Abbrechen]                              [Vorlage speichern]│
+│ Basiert auf: Monatliche Miete v2 │
+│ Neue Version: v3 │
+│ │
+│ Standardbetrag: [1.500,00] □ Betrag variabel │
+│ │
+│ Positionen: │
+│ │
+│ Konto Anteil/Betrag │
+│ [_________________________________ ▼] [1,00] │
+│ [_________________________________ ▼] [-1,00] │
+│ │
+│ [+ Position] │
+│ │
+│ [Abbrechen] [Vorlage speichern]│
 └─────────────────────────────────────────────────────────────┘
+
+**Version Creation Rules**:
+- New versions automatically increment (v1 → v2 → v3)
+- All fields pre-filled from selected base version
+- Changes create new version, original remains unchanged
+- Version history maintained for audit trail
+
 ```
 
 ### 4.7 Reports (Berichte)
@@ -297,29 +453,31 @@ This document describes the web user interface design for the Tideland Ledger ap
 **Layout**:
 
 ```
+
 ┌─────────────────────────────────────────────────────────────┐
-│                         Berichte                            │
+│ Berichte │
 ├─────────────────────────────────────────────────────────────┤
-│ Berichtstyp: [Probebilanz ▼]                              │
-│                                                             │
-│ Zeitraum:    [____-__-__] bis [____-__-__]                │
-│                                                             │
-│ [Bericht erstellen]                                        │
+│ Berichtstyp: [Probebilanz ▼] │
+│ │
+│ Zeitraum: [____-__-__] bis [____-__-__] │
+│ │
+│ [Bericht erstellen] │
 ├─────────────────────────────────────────────────────────────┤
-│                    Probebilanz                             │
-│                    31.01.2024                              │
-│                                                             │
-│ Konto    Bezeichnung           Soll         Haben         │
+│ Probebilanz │
+│ 31.01.2024 │
+│ │
+│ Konto Bezeichnung Soll Haben │
 │ ────────────────────────────────────────────────────────── │
-│ 1000     Kasse                 250,00                      │
-│ 1200     Bank                12.500,00                     │
-│ 3000     Eigenkapital                      30.000,00      │
-│ ...                                                        │
+│ Vermögen : Bargeld 250,00 │
+│ Vermögen : Bank 12.500,00 │
+│ Eigenkapital 30.000,00 │
+│ ... │
 │ ────────────────────────────────────────────────────────── │
-│ Summen:                      42.750,00     42.750,00      │
-│                                                             │
-│ [Drucken] [Als CSV exportieren]                            │
+│ Summen: 42.750,00 42.750,00 │
+│ │
+│ [Drucken] [Als CSV exportieren] │
 └─────────────────────────────────────────────────────────────┘
+
 ```
 
 ### 4.8 User Management (Benutzer)
@@ -329,19 +487,21 @@ This document describes the web user interface design for the Tideland Ledger ap
 **Layout**:
 
 ```
+
 ┌─────────────────────────────────────────────────────────────┐
-│                      Benutzerverwaltung                     │
+│ Benutzerverwaltung │
 ├─────────────────────────────────────────────────────────────┤
-│ [Neuer Benutzer]                                           │
+│ [Neuer Benutzer] │
 ├─────────────────────────────────────────────────────────────┤
-│ Benutzername    Rolle           Letzte Anmeldung  Status  │
+│ Benutzername Rolle Letzte Anmeldung Status │
 │ ────────────────────────────────────────────────────────── │
-│ admin           Administrator    15.01.24 14:30    Aktiv   │
-│ mmueller        Buchhalter       15.01.24 09:15    Aktiv   │
-│ kschmidt        Betrachter       10.01.24 11:00    Aktiv   │
-│                                                             │
-│ Klicken zum Bearbeiten                                     │
+│ admin Administrator 15.01.24 14:30 Aktiv │
+│ mmueller Buchhalter 15.01.24 09:15 Aktiv │
+│ kschmidt Betrachter 10.01.24 11:00 Aktiv │
+│ │
+│ Klicken zum Bearbeiten │
 └─────────────────────────────────────────────────────────────┘
+
 ```
 
 ## 5. Form Patterns
@@ -364,7 +524,7 @@ This document describes the web user interface design for the Tideland Ledger ap
 <!-- Account input with wide field -->
 <div class="field">
   <label for="account">Konto</label>
-  <input type="text" id="account" name="account" class="account-input" placeholder="1000 : 1200 : Bank - Girokonto" />
+  <input type="text" id="account" name="account" class="account-input" placeholder="Vermögen : Bank : Girokonto" />
 </div>
 
 <!-- Date input -->

@@ -13,15 +13,12 @@ defmodule Ledger.AccountPath do
 
   @type t :: String.t()
 
+  alias Ledger.Config
+
   # The standard separator used in normalized paths
   # This ensures consistent formatting throughout the system
   @separator " : "
   @separator_regex ~r/\s*:\s*/
-
-  # Maximum depth of account hierarchy to prevent excessive nesting
-  # This is a reasonable limit that allows for detailed account structures
-  # while preventing potential abuse or errors
-  @max_depth 6
 
   # Pattern for valid account segment names
   # Allows letters, numbers, spaces, and common punctuation
@@ -84,7 +81,7 @@ defmodule Ledger.AccountPath do
         false
 
       # Check depth limit
-      depth(normalized) > @max_depth ->
+      depth(normalized) > Config.max_account_depth() ->
         false
 
       # Validate each segment
@@ -120,8 +117,8 @@ defmodule Ledger.AccountPath do
       normalized == "" ->
         {:error, :empty_path}
 
-      depth(normalized) > @max_depth ->
-        {:error, {:exceeds_max_depth, @max_depth}}
+      depth(normalized) > Config.max_account_depth() ->
+        {:error, {:exceeds_max_depth, Config.max_account_depth()}}
 
       true ->
         case find_invalid_segment(normalized) do

@@ -125,12 +125,19 @@ The Tideland Ledger is a web-based simplified ledger-style bookkeeping system im
 - Automated testing suite
 - Development and deployment documentation
 
-### 5.4 Usability
+### 4.4 Usability
 
 - Intuitive workflow for common tasks
 - Clear error messages
 - Contextual help where needed
 - Consistent UI patterns
+
+### 4.5 Internationalization
+
+- Business logic returns error atoms/symbols, not translated strings
+- Translation happens only at the UI layer
+- German language UI with potential for future language additions
+- Separation of concerns between business logic and presentation
 
 ## 6. Development Priorities
 
@@ -245,3 +252,4 @@ The Tideland Ledger is a web-based simplified ledger-style bookkeeping system im
 - Focus on functionality over aesthetics
 - UI text in German language only
 - Source code, SQL, comments, and documentation remain in English
+- Error handling: Business logic returns atoms, UI layer translates to German

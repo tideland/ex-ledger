@@ -100,26 +100,46 @@ currency_position = "after"  # "before" or "after"
 [accounts]
 # Chart of accounts settings
 hierarchy_separator = " : "  # Separator for hierarchical accounts
+max_depth = 6  # Maximum nesting levels for account hierarchy
+recent_transaction_days = 30  # Days to check for recent transactions when deactivating
 
 # Note: The ledger system does not enforce account types.
-# Account interpretation (asset, liability, etc.) is determined
-# by the numbering scheme and handled in reporting logic.
+# Account interpretation is based on the account hierarchy and naming
+
+[amount]
+# Amount and currency settings
+default_currency = "EUR"
+precision = 2  # Decimal places
+rounding_mode = "half_even"  # Banker's rounding
 
 [transactions]
 # Transaction settings
 auto_reference = true  # Auto-generate reference numbers
 void_requires_reason = true
+allow_backdated = true  # Allow transactions in the past
+max_backdate_days = 365  # Maximum days a transaction can be backdated
+max_positions = 100  # Maximum positions per transaction
 
 
+[periods]
+# Period closing configuration
+closing_enabled = true
+closable_types = ["month", "quarter", "year"]
+allow_admin_bypass = true  # Admins can post to closed periods
 
 [import]
 # CSV import settings
 csv_delimiter = ";"
 csv_date_format = "DD.MM.YYYY"
+max_file_size = 10485760  # 10 MB in bytes
+batch_size = 100  # Records processed per batch
 
 [export]
 # Export settings
-formats = ["CSV", "PDF"]
+formats = ["csv", "json"]  # Supported export formats
+csv_delimiter = ";"
+csv_encoding = "UTF-8"
+include_inactive_accounts = false
 
 [backup]
 # Backup configuration
@@ -327,8 +347,12 @@ defmodule Ledger.Accounts do
     Config.get([:accounts, :hierarchy_separator], " : ")
   end
 
-  def max_code_length do
-    Config.get([:accounts, :code_length_max], 8)
+  def max_depth do
+    Config.get([:accounts, :max_depth], 6)
+  end
+
+  def recent_transaction_days do
+    Config.get([:accounts, :recent_transaction_days], 30)
   end
 end
 

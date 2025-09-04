@@ -408,10 +408,27 @@ For detailed implementation guidance, refer to these companion documents:
 - Never show technical errors to users
 - Log technical details for debugging
 - Provide recovery suggestions
+- Business logic returns error atoms/symbols only
+- Translation happens at the UI layer
 
-**Solution**: Error boundary supervision, translated error messages
+**Solution**: Error atoms in business logic, translation module in UI layer
 
-**Rationale**: Users need clear guidance when errors occur. Technical details belong in logs, not user interfaces.
+**Rationale**: Users need clear guidance when errors occur. Technical details belong in logs, not user interfaces. Separating error symbols from translations enables proper internationalization.
+
+### REQ-024b: Internationalization Architecture
+
+**Requirement**: Clear separation between business logic and UI translations.
+
+**Constraints**:
+
+- Business logic modules return only atoms or tuples for errors
+- No hardcoded user-facing strings in schemas or contexts
+- All translation happens in the web layer
+- German as primary UI language
+
+**Solution**: Dedicated translation module (ErrorMessages) in web layer
+
+**Rationale**: This separation enables future multi-language support and keeps business logic pure. It also makes testing easier as business logic tests don't depend on specific message strings.
 
 ## 9. Development Requirements
 

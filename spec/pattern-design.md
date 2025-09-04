@@ -817,7 +817,7 @@ For compile-time configuration:
 defmodule Ledger.Accounts do
   # Module attributes are compile-time constants
   @account_types [:asset, :liability, :equity, :revenue, :expense]
-  @max_path_depth 5
+  @max_path_depth 6
 
   # Using 'in' operator with module attribute for fast membership check
   def valid_account_type?(type) do

@@ -1,18 +1,18 @@
 # Tideland Ledger - Core Ledger Concepts
 
-## 1. Double-Entry Bookkeeping Model
+## 1. Simplified Ledger-Style Bookkeeping Model
 
-### 1.1 Transaction Structure
+### 1.1 Entry Structure
 
-A transaction in our ledger system consists of:
+An entry in our ledger system consists of:
 
-- **Transaction metadata**: Date, description, reference number, user who created it
-- **Multiple positions** (also called entries or line items)
+- **Entry metadata**: Date, description, reference number, user who created it
+- **Multiple positions** (also called line items)
 - **Validation rule**: The sum of all positions must equal zero
 
-### 1.2 Position (Entry) Structure
+### 1.2 Position Structure
 
-Each position within a transaction contains:
+Each position within an entry contains:
 
 - Reference to an account
 - Amount (positive or negative)
@@ -21,12 +21,12 @@ Each position within a transaction contains:
 
 ### 1.3 Zero-Sum Validation
 
-The fundamental rule: For every transaction, the sum of all position amounts must equal zero.
+The fundamental rule: For every entry, the sum of all position amounts must equal zero.
 
 Example:
 
 ```
-Transaction: "Purchase office supplies with cash"
+Entry: "Purchase office supplies with cash"
 - Position 1: Office Supplies Account: +50.00
 - Position 2: Cash Account: -50.00
 - Sum: +50.00 + (-50.00) = 0.00 ✓
@@ -68,16 +68,16 @@ While the ledger doesn't enforce account types, accounting conventions typically
 
 ### 2.3 The Fundamental Rule
 
-The only enforced rule in the ledger: **Every transaction must balance to zero**.
+The only enforced rule in the ledger: **Every entry must balance to zero**.
 
 The accounting equation (Assets = Liabilities + Equity + Revenue - Expenses) is a reporting convention built on top of the ledger data, not enforced by the system itself.
 
-## 3. Transaction Examples
+## 3. Entry Examples
 
 ### 3.1 Simple Purchase
 
 ```
-Transaction: "Buy laptop for 1,200.00"
+Entry: "Buy laptop for 1,200.00"
 Date: 2024-01-15
 Positions:
   1. Account 0620 (Equipment):     +1,200.00
@@ -85,10 +85,10 @@ Positions:
 Sum: 0.00 ✓
 ```
 
-### 3.2 Revenue Transaction
+### 3.2 Revenue Entry
 
 ```
-Transaction: "Invoice client for services"
+Entry: "Invoice client for services"
 Date: 2024-01-20
 Positions:
   1. Account 1400 (Accounts Receivable):  +5,000.00
@@ -96,10 +96,10 @@ Positions:
 Sum: 0.00 ✓
 ```
 
-### 3.3 Complex Transaction with Multiple Accounts
+### 3.3 Complex Entry with Multiple Accounts
 
 ```
-Transaction: "Pay invoice with early payment discount"
+Entry: "Pay invoice with early payment discount"
 Date: 2024-01-25
 Positions:
   1. Accounts Payable (Liability):  +1,000.00  // Reducing liability
@@ -111,7 +111,7 @@ Sum: +1,000.00 - 980.00 - 20.00 = 0.00 ✓
 ### 3.4 Multi-Position Split
 
 ```
-Transaction: "Monthly rent payment including utilities"
+Entry: "Monthly rent payment including utilities"
 Date: 2024-02-01
 Positions:
   1. Rent Expense:            +800.00
@@ -132,16 +132,16 @@ Sum: +800.00 + 150.00 + 50.00 - 1,000.00 = 0.00 ✓
 
 ### 4.2 Validation Rules
 
-1. **Zero-sum rule**: Transaction positions must sum to zero
-2. **Minimum positions**: At least 2 positions per transaction
+1. **Zero-sum rule**: Entry positions must sum to zero
+2. **Minimum positions**: At least 2 positions per entry
 3. **Non-zero amounts**: Each position must have a non-zero amount
 4. **Valid accounts**: Each position must reference an existing account
 
-### 4.3 Transaction States
+### 4.3 Entry States
 
 - **Draft**: Can be edited, not yet validated
 - **Posted**: Validated and immutable
-- **Reversed**: Cancelled by a reversing transaction (not deleted)
+- **Reversed**: Cancelled by a reversing entry (not deleted)
 
 ## 5. Account Hierarchy and Chart of Accounts
 

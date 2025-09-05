@@ -13,11 +13,10 @@ The Tideland Ledger is a web-based simplified ledger-style bookkeeping system im
 
 ### 2.1 User Management
 
-- Multi-user system using Tideland Auth service for authentication
+- Built-in multi-user system with a design that allows for future extraction to a centralized Tideland Auth service.
 - Three ledger-specific roles: Admin, Bookkeeper, Viewer
 - Hardcoded "admin" user as system root (like Unix root)
 - Admin users can create and manage other users within the ledger
-- User authentication delegated to Tideland Auth
 - Role-based permissions for ledger operations
 
 ### 2.2 Ledger Functionality
@@ -31,8 +30,8 @@ The Tideland Ledger is a web-based simplified ledger-style bookkeeping system im
   - Full-text search capability across accounts
   - Filtering by hierarchy level
 - No SKR03/SKR04 or similar chart of accounts standards
-- Transaction entry and posting (internally called "Entry" with "Positions")
-- Transaction templates for recurring entries (maintainable online)
+- Entry and posting (internally called "Entry" with "Positions")
+- Entry templates for recurring entries (maintainable online)
 - Templates must validate against existing accounts
 - Template positions use fractions of total sum as standard
 - Optional default totals for templates
@@ -42,7 +41,7 @@ The Tideland Ledger is a web-based simplified ledger-style bookkeeping system im
 
 - Trial balance generation
 - Account balance queries (debit/credit totals)
-- Transaction history views (based on Entry/Position model)
+- Entry history views (based on Entry/Position model)
 - Flexible reporting based on account numbering schemes
 - Future: Additional reports and dashboards
 - Export capabilities (format to be defined)
@@ -63,7 +62,6 @@ The Tideland Ledger is a web-based simplified ledger-style bookkeeping system im
 - Ecto ORM with SQLite database
 - LiveView for interactive UI components
 - Tailwind CSS for styling (Phoenix default)
-- Tideland Auth for authentication and authorization
 
 ### 3.2 Architecture Requirements
 
@@ -78,7 +76,7 @@ The Tideland Ledger is a web-based simplified ledger-style bookkeeping system im
 - SQLite for initial data persistence with design allowing future PostgreSQL support
 - Database abstraction layer to facilitate future database system changes
 - Proper schema design for simplified ledger-style bookkeeping
-- Transaction integrity and ACID compliance
+- Entry integrity and ACID compliance
 - Efficient indexing for reporting queries
 - Migration support for schema evolution
 
@@ -95,7 +93,7 @@ The Tideland Ledger is a web-based simplified ledger-style bookkeeping system im
 ### 4.2 Key UI Components
 
 - Dashboard with account overview
-- Transaction entry forms
+- Entry forms
 - Template management interface
 - Report generation and viewing
 - Account management screens
@@ -105,14 +103,14 @@ The Tideland Ledger is a web-based simplified ledger-style bookkeeping system im
 
 ### 5.1 Performance
 
-- Fast transaction posting
+- Fast entry posting
 - Efficient report generation
 - Responsive UI with sub-second page loads
-- Scalable to thousands of transactions
+- Scalable to thousands of entries
 
 ### 5.2 Security
 
-- Authentication via Tideland Auth service
+- Built-in authentication with secure password hashing
 - Role-based authorization for ledger operations
 - Audit logging for sensitive operations
 - Protection against common web vulnerabilities

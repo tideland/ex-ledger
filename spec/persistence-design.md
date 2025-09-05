@@ -64,9 +64,9 @@ TABLE users {
 // Chart of Accounts
 TABLE accounts {
   FIELD id : ID
-  FIELD code : STRING(20) [NOT NULL, UNIQUE]
+  FIELD code : STRING(20) [NOT NULL, UNIQUE] // Stores the full hierarchical path, e.g., "Assets : Bank : Checking"
   FIELD name : STRING(100) [NOT NULL]
-  FIELD parent_id : INTEGER [NULL]  // Self-reference for account hierarchy
+  FIELD parent_id : INTEGER [NULL]  // Used for relational integrity and easier hierarchy traversal
   FIELD description : TEXT [NULL]
   FIELD active : BOOLEAN [NOT NULL, DEFAULT true]
   FIELD created_at : TIMESTAMP [NOT NULL, DEFAULT NOW]
@@ -152,7 +152,7 @@ TABLE template_lines {
   FIELD description : STRING(200) [NULL]
   FIELD line_type : ENUM[debit, credit] [NOT NULL]
   FIELD amount_type : ENUM[fixed, percentage] [NOT NULL]
-  FIELD amount_value : DECIMAL(15,4) [NOT NULL]  // Value or percentage
+  FIELD amount_value : DECIMAL(15,2) [NOT NULL]  // Value or percentage
   FIELD tax_relevant : BOOLEAN [NOT NULL, DEFAULT false]
   FIELD position : INTEGER [NOT NULL]
 

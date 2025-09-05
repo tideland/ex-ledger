@@ -18,29 +18,29 @@ Pattern matching is fundamental to Elixir. Use it for:
 ```elixir
 # Function heads with pattern matching
 # This function will only match if positions list is empty
-def process_transaction(%Transaction{positions: []} = transaction) do
+def process_entry(%Entry{positions: []} = entry) do
   # Return error tuple - standard Elixir error handling pattern
-  {:error, "Transaction must have positions"}
+  {:error, "Entry must have positions"}
 end
 
 # This function matches when positions exist and uses guard clause
 # Guards add extra conditions beyond pattern matching
-def process_transaction(%Transaction{positions: positions} = transaction) when length(positions) >= 2 do
-  # The '= transaction' captures the whole struct for use in function body
-  # Process valid transaction
-  {:ok, transaction}
+def process_entry(%Entry{positions: positions} = entry) when length(positions) >= 2 do
+  # The '= entry' captures the whole struct for use in function body
+  # Process valid entry
+  {:ok, entry}
 end
 
 # Case statement pattern matching
 # 'case' lets us match different outcomes from a function call
-case validate_transaction(transaction) do
-  # Match successful validation - destructure the tuple and bind valid_transaction
-  {:ok, valid_transaction} ->
-    post_transaction(valid_transaction)
+case validate_entry(entry) do
+  # Match successful validation - destructure the tuple and bind valid_entry
+  {:ok, valid_entry} ->
+    post_entry(valid_entry)
 
   # Match any error - underscore means we don't care about the specific error atom
   {:error, reason} ->
-    Logger.error("Transaction validation failed: #{reason}")
+    Logger.error("Entry validation failed: #{reason}")
     # Return the error tuple to caller
     {:error, reason}
 end
@@ -61,9 +61,9 @@ input
 |> String.trim()               # Finally: remove whitespace
 
 # Real example from ledger:
-def create_transaction(attrs) do
-  %Transaction{}                # Start with empty Transaction struct
-  |> Transaction.changeset(attrs)  # Apply changes and basic validation
+def create_entry(attrs) do
+  %Entry{}                # Start with empty Entry struct
+  |> Entry.changeset(attrs)  # Apply changes and basic validation
   |> validate_positions()          # Custom validation: check positions
   |> validate_zero_sum()           # Custom validation: ensure balance
   |> Repo.insert()                 # Save to database if all validations pass
@@ -76,23 +76,23 @@ end
 Use `with` for happy path programming with multiple operations that might fail:
 
 ```elixir
-def post_transaction(transaction_params) do
+def post_entry(entry_params) do
   # 'with' chains operations that might fail
   # Each line must return {:ok, value} to continue
-  with {:ok, transaction} <- validate_transaction(transaction_params),
-       # Notice we rebind 'transaction' - each step can transform it
-       {:ok, transaction} <- check_accounts_exist(transaction),
-       {:ok, transaction} <- validate_zero_sum(transaction),
-       # Final step returns 'posted' instead of 'transaction'
-       {:ok, posted} <- Repo.insert(transaction) do
+  with {:ok, entry} <- validate_entry(entry_params),
+       # Notice we rebind 'entry' - each step can transform it
+       {:ok, entry} <- check_accounts_exist(entry),
+       {:ok, entry} <- validate_zero_sum(entry),
+       # Final step returns 'posted' instead of 'entry'
+       {:ok, posted} <- Repo.insert(entry) do
     # If all succeed, return the final result
     {:ok, posted}
   else
     # 'else' handles any {:error, reason} from above
     # Pattern match specific errors to provide better messages
-    {:error, :invalid_transaction} -> {:error, "Transaction validation failed"}
+    {:error, :invalid_entry} -> {:error, "Entry validation failed"}
     {:error, :accounts_not_found} -> {:error, "One or more accounts do not exist"}
-    {:error, :non_zero_sum} -> {:error, "Transaction does not balance"}
+    {:error, :non_zero_sum} -> {:error, "Entry does not balance"}
     # Catch-all for unexpected errors (like changeset errors from Repo.insert)
     {:error, changeset} -> {:error, changeset}
   end
@@ -169,7 +169,7 @@ end
 Supervisors for fault tolerance:
 
 ```elixir
-defmodule Ledger.TransactionSupervisor do
+defmodule Ledger.EntrySupervisor do
   # Supervisor manages child processes and restarts them if they crash
   use Supervisor
 
@@ -183,12 +183,12 @@ defmodule Ledger.TransactionSupervisor do
     children = [
       # Simple child spec - will use default restart strategy (:permanent)
       # This process will always be restarted if it crashes
-      {Ledger.TransactionProcessor, []},
+      {Ledger.EntryProcessor, []},
 
       # Detailed child spec with custom settings
       %{
-        id: Ledger.TransactionValidator,  # Unique ID for this child
-        start: {Ledger.TransactionValidator, :start_link, []},  # How to start it
+        id: Ledger.EntryValidator,  # Unique ID for this child
+        start: {Ledger.EntryValidator, :start_link, []},  # How to start it
         restart: :temporary  # Never restart (vs :permanent or :transient)
       }
     ]
@@ -241,12 +241,12 @@ end
 Validate and transform data:
 
 ```elixir
-defmodule Ledger.Transactions.Transaction do
+defmodule Ledger.Entries.Entry do
   use Ecto.Schema
   import Ecto.Changeset
 
   # Define database table structure
-  schema "transactions" do
+  schema "entries" do
     # Field types map to database columns
     field :date, :date
     field :description, :string
@@ -254,7 +254,7 @@ defmodule Ledger.Transactions.Transaction do
     field :posted, :boolean, default: false
 
     # Associations - Ecto handles foreign keys
-    has_many :positions, Position  # One transaction has many positions
+    has_many :positions, Position  # One entry has many positions
     belongs_to :created_by, User   # References users table via created_by_id
 
     # Adds inserted_at and updated_at fields automatically
@@ -262,8 +262,8 @@ defmodule Ledger.Transactions.Transaction do
   end
 
   # Changeset function validates and transforms data before DB operations
-  def changeset(transaction, attrs) do
-    transaction
+  def changeset(entry, attrs) do
+    entry
     # Cast external data to schema types, only allowing specified fields
     |> cast(attrs, [:date, :description, :reference])
     # These fields must be present
@@ -304,16 +304,17 @@ end
 Build complex queries step by step:
 
 ```elixir
-defmodule Ledger.Transactions do
+defmodule Ledger.Entries do
   import Ecto.Query
 
   # Public function with optional filters map
-  def list_transactions(filters \\ %{}) do
-    Transaction  # Start with base query (just the schema module name)
+  def list_entries(filters \ %{})
+  def list_entries(filters \ %{}) do
+    Entry  # Start with base query (just the schema module name)
     |> filter_by_date_range(filters)  # Each function adds conditions
     |> filter_by_account(filters)      # Filters are composable
     |> filter_by_amount(filters)       # Order matters for some operations
-    |> order_by([t], desc: t.date, desc: t.inserted_at)  # Sort newest first
+    |> order_by([e], desc: e.date, desc: e.inserted_at)  # Sort newest first
     |> preload([:positions, :created_by])  # Avoid N+1 queries
     |> Repo.all()  # Execute query and return results
   end
@@ -321,10 +322,10 @@ defmodule Ledger.Transactions do
   # Pattern match on map with specific keys
   defp filter_by_date_range(query, %{from_date: from_date, to_date: to_date}) do
     query
-    # [t] binds the transaction table for use in expressions
+    # [e] binds the entry table for use in expressions
     # ^ (pin operator) uses the variable value, prevents SQL injection
-    |> where([t], t.date >= ^from_date)
-    |> where([t], t.date <= ^to_date)  # Multiple wheres are AND'd together
+    |> where([e], e.date >= ^from_date)
+    |> where([e], e.date <= ^to_date)  # Multiple wheres are AND'd together
   end
   # Fallback clause when date filters not provided - return query unchanged
   defp filter_by_date_range(query, _), do: query
@@ -332,10 +333,10 @@ defmodule Ledger.Transactions do
   defp filter_by_account(query, %{account_path: account_path}) do
     query
     # Join with positions table through association
-    |> join(:inner, [t], p in assoc(t, :positions))
-    # Now we can reference both [t] and [p] in where clause
-    |> where([t, p], p.account_path == ^account_path)
-    # Remove duplicate transactions (since one transaction has many positions)
+    |> join(:inner, [e], p in assoc(e, :positions))
+    # Now we can reference both [e] and [p] in where clause
+    |> where([e, p], p.account_path == ^account_path)
+    # Remove duplicate entries (since one entry has many positions)
     |> distinct(true)
   end
   defp filter_by_account(query, _), do: query
@@ -347,38 +348,38 @@ end
 For bulk operations:
 
 ```elixir
-defmodule Ledger.Transactions do
+defmodule Ledger.Entries do
   alias Ecto.Multi
 
-  def post_transaction(transaction_id) do
+  def post_entry(entry_id) do
     # Multi allows multiple database operations in a single transaction
     # If any step fails, everything is rolled back
     Multi.new()
-    # Each step has a name (:transaction) and operation
-    |> Multi.run(:transaction, fn repo, _changes_so_far ->
-      # First step: find the transaction
-      case repo.get(Transaction, transaction_id) do
+    # Each step has a name (:entry) and operation
+    |> Multi.run(:entry, fn repo, _changes_so_far ->
+      # First step: find the entry
+      case repo.get(Entry, entry_id) do
         nil -> {:error, :not_found}  # This will abort the Multi
-        transaction -> {:ok, transaction}  # Pass to next steps
+        entry -> {:ok, entry}  # Pass to next steps
       end
     end)
-    |> Multi.run(:validate, fn _repo, %{transaction: transaction} ->
+    |> Multi.run(:validate, fn _repo, %{entry: entry} ->
       # Second step: validate (can access previous results)
-      # %{transaction: transaction} destructures results from previous steps
-      validate_for_posting(transaction)
+      # %{entry: entry} destructures results from previous steps
+      validate_for_posting(entry)
     end)
-    |> Multi.update(:post, fn %{transaction: transaction} ->
-      # Third step: update the transaction
+    |> Multi.update(:post, fn %{entry: entry} ->
+      # Third step: update the entry
       # Must return a changeset for Multi.update
-      Transaction.posting_changeset(transaction, %{posted: true})
+      Entry.posting_changeset(entry, %{posted: true})
     end)
-    |> Multi.run(:update_balances, fn repo, %{transaction: transaction} ->
+    |> Multi.run(:update_balances, fn repo, %{entry: entry} ->
       # Fourth step: custom operation with repo access
-      update_account_balances(repo, transaction)
+      update_account_balances(repo, entry)
     end)
     # Execute all operations in a database transaction
     |> Repo.transaction()
-    # Returns {:ok, %{transaction: ..., validate: ..., post: ..., update_balances: ...}}
+    # Returns {:ok, %{entry: ..., validate: ..., post: ..., update_balances: ...}}
     # or {:error, failed_step_name, failed_value, changes_so_far}
   end
 end
@@ -432,23 +433,23 @@ end
 For complex contexts, delegate to specialized modules:
 
 ```elixir
-defmodule Ledger.Transactions do
+defmodule Ledger.Entries do
   # Delegate complex operations to specialized modules
   # This keeps the context module focused on coordination
 
   # defdelegate creates a function that calls another module's function
   defdelegate balance_for_account(account, date),
-    to: Ledger.Transactions.BalanceCalculator,  # Target module
+    to: Ledger.Entries.BalanceCalculator,  # Target module
     as: :calculate  # Function name in target module (optional rename)
   # This creates balance_for_account/2 that calls BalanceCalculator.calculate/2
 
-  defdelegate validate_transaction(transaction),
-    to: Ledger.Transactions.Validator,
+  defdelegate validate_entry(entry),
+    to: Ledger.Entries.Validator,
     as: :validate
 
   # Keep simple CRUD in the context
   # The ! means it raises an exception if not found (Ecto convention)
-  def get_transaction!(id), do: Repo.get!(Transaction, id)
+  def get_entry!(id), do: Repo.get!(Entry, id)
 end
 ```
 
@@ -459,26 +460,26 @@ end
 Keep controllers thin:
 
 ```elixir
-defmodule LedgerWeb.TransactionController do
+defmodule LedgerWeb.EntryController do
   use LedgerWeb, :controller  # Imports helpers like render, redirect, etc.
-  alias Ledger.Transactions  # Reference context, not schemas directly
+  alias Ledger.Entries  # Reference context, not schemas directly
 
   # Action functions receive conn (connection) and params
   def index(conn, params) do
     # Controller just coordinates - business logic in context
-    transactions = Transactions.list_transactions(params)
-    # Render template with assigns (available as @transactions in template)
-    render(conn, :index, transactions: transactions)
+    entries = Entries.list_entries(params)
+    # Render template with assigns (available as @entries in template)
+    render(conn, :index, entries: entries)
   end
 
-  # Pattern match params to extract nested transaction data
-  def create(conn, %{"transaction" => transaction_params}) do
+  # Pattern match params to extract nested entry data
+  def create(conn, %{"entry" => entry_params}) do
     # Context function returns tagged tuple
-    case Transactions.create_transaction(transaction_params) do
-      {:ok, transaction} ->
+    case Entries.create_entry(entry_params) do
+      {:ok, entry} ->
         conn
-        |> put_flash(:info, "Transaction created successfully.")  # Flash message
-        |> redirect(to: ~p"/transactions/#{transaction}")  # ~p is path helper
+        |> put_flash(:info, "Entry created successfully.")  # Flash message
+        |> redirect(to: ~p"/entries/#{entry}")  # ~p is path helper
 
       {:error, %Ecto.Changeset{} = changeset} ->
         # Re-render form with errors (changeset contains validation errors)
@@ -488,9 +489,9 @@ defmodule LedgerWeb.TransactionController do
 end
 ```
 
-### 5.3 Transaction Context Implementation
+### 5.3 Entry Context Implementation
 
-The Transactions context demonstrates advanced patterns:
+The Entries context demonstrates advanced patterns:
 
 ```elixir
 defmodule Ledger.Transactions do
@@ -555,42 +556,42 @@ Key patterns used:
 Stateful UI without JavaScript:
 
 ```elixir
-defmodule LedgerWeb.TransactionLive.Form do
+defmodule LedgerWeb.EntryLive.Form do
   use LedgerWeb, :live_view  # LiveView for interactive UI without JavaScript
-  alias Ledger.Transactions
+  alias Ledger.Entries
 
   # Called when LiveView component is first loaded
   def mount(params, _session, socket) do
     {:ok,
      socket
      # Socket holds state for this LiveView connection
-     |> assign(:transaction, %Transaction{positions: []})
+     |> assign(:entry, %Entry{positions: []})
      # to_form converts changeset to form data structure
-     |> assign(:form, to_form(Transactions.change_transaction()))}
+     |> assign(:form, to_form(Entries.change_entry()))}
   end
 
   # Handle client events (like button clicks)
   def handle_event("add_position", _params, socket) do
     # Add new empty position to list
-    positions = socket.assigns.transaction.positions ++ [%Position{}]
+    positions = socket.assigns.entry.positions ++ [%Position{}]
 
     {:noreply,  # Don't send reply to client
      socket
      # Update struct with new positions list
-     |> assign(:transaction, %{socket.assigns.transaction | positions: positions})
+     |> assign(:entry, %{socket.assigns.entry | positions: positions})
      # Regenerate form to include new position
-     |> assign(:form, to_form(Transactions.change_transaction(socket.assigns.transaction)))}
+     |> assign(:form, to_form(Entries.change_entry(socket.assigns.entry)))}
   end
 
   # Handle form submission
-  def handle_event("save", %{"transaction" => params}, socket) do
-    case Transactions.create_transaction(params) do
-      {:ok, transaction} ->
+  def handle_event("save", %{"entry" => params}, socket) do
+    case Entries.create_entry(params) do
+      {:ok, entry} ->
         {:noreply,
          socket
-         |> put_flash(:info, "Transaction created!")
+         |> put_flash(:info, "Entry created!")
          # Navigate to new page (full page load)
-         |> push_navigate(to: ~p"/transactions/#{transaction}")}
+         |> push_navigate(to: ~p"/entries/#{entry}")}
 
       {:error, changeset} ->
         # Re-render with errors (no page reload)
@@ -691,13 +692,13 @@ end
 Provide context in errors:
 
 ```elixir
-def create_transaction(attrs) do
+def create_entry(attrs) do
   # Each step in 'with' can transform and pass along data
-  with {:ok, transaction} <- build_transaction(attrs),
+  with {:ok, entry} <- build_entry(attrs),
        # Notice: we're returning 3-element tuples for more context
-       {:ok, transaction} <- validate_accounts(transaction),
-       {:ok, transaction} <- validate_zero_sum(transaction),
-       {:ok, saved} <- Repo.insert(transaction) do
+       {:ok, entry} <- validate_accounts(entry),
+       {:ok, entry} <- validate_zero_sum(entry),
+       {:ok, saved} <- Repo.insert(entry) do
     {:ok, saved}
   else
     # Pattern match on 3-element error tuples for specific handling
@@ -707,7 +708,7 @@ def create_transaction(attrs) do
 
     {:error, :non_zero_sum, sum} ->
       # Show the actual imbalance amount
-      {:error, "Transaction doesn't balance. Off by: #{sum}"}
+      {:error, "Entry doesn't balance. Off by: #{sum}"}
 
     # Changeset errors are already well-structured
     {:error, %Ecto.Changeset{} = changeset} ->
@@ -750,7 +751,7 @@ Create test data consistently:
 
 ```elixir
 defmodule Ledger.Factory do
-  alias Ledger.{Repo, Accounts, Transactions}
+  alias Ledger.{Repo, Accounts, Entries}
 
   # Factory pattern creates consistent test data
   def build(:account) do
@@ -763,12 +764,12 @@ defmodule Ledger.Factory do
     }
   end
 
-  def build(:transaction) do
-    %Transactions.Transaction{
+  def build(:entry) do
+    %Entries.Entry{
       date: Date.utc_today(),
-      description: "Test transaction",
+      description: "Test entry",
       positions: [
-        # Build balanced transaction (sum = 0)
+        # Build balanced entry (sum = 0)
         build(:position, amount: Amount.new(100)),
         build(:position, amount: Amount.new(-100))
       ]
@@ -776,7 +777,7 @@ defmodule Ledger.Factory do
   end
 
   # Helper to build and insert in one step
-  def insert!(factory, attrs \\ %{}) do
+  def insert!(factory, attrs \ %{}) do
     factory
     |> build()  # Create base struct
     |> Map.merge(attrs)  # Override with custom attributes
@@ -790,20 +791,20 @@ end
 Test through the public API:
 
 ```elixir
-defmodule Ledger.TransactionsTest do
+defmodule Ledger.EntriesTest do
   use Ledger.DataCase  # Provides database sandbox for tests
-  alias Ledger.Transactions
+  alias Ledger.Entries
 
   # 'describe' groups related tests
-  describe "create_transaction/1" do
-    test "creates transaction with valid data" do
+  describe "create_entry/1" do
+    test "creates entry with valid data" do
       # Arrange - create test data
       account1 = insert!(:account)
       account2 = insert!(:account)
 
       attrs = %{
         date: ~D[2024-01-15],  # Date sigil for date literals
-        description: "Test transaction",
+        description: "Test entry",
         positions: [
           # Note: amounts as strings to simulate form input
           %{account_id: account1.id, amount: "100.00"},
@@ -812,22 +813,22 @@ defmodule Ledger.TransactionsTest do
       }
 
       # Act - call the function we're testing
-      assert {:ok, transaction} = Transactions.create_transaction(attrs)
+      assert {:ok, entry} = Entries.create_entry(attrs)
 
       # Assert - verify the results
-      assert transaction.description == "Test transaction"
-      assert length(transaction.positions) == 2
+      assert entry.description == "Test entry"
+      assert length(entry.positions) == 2
       # Each test runs in a database transaction that's rolled back
     end
 
     test "fails with non-zero sum" do
-      # Test the business rule - transactions must balance
+      # Test the business rule - entries must balance
       account1 = insert!(:account)
       account2 = insert!(:account)
 
       attrs = %{
         date: ~D[2024-01-15],
-        description: "Unbalanced transaction",
+        description: "Unbalanced entry",
         positions: [
           %{account_id: account1.id, amount: "100.00"},
           %{account_id: account2.id, amount: "-90.00"}  # Off by 10
@@ -835,7 +836,7 @@ defmodule Ledger.TransactionsTest do
       }
 
       # Expecting failure
-      assert {:error, changeset} = Transactions.create_transaction(attrs)
+      assert {:error, changeset} = Entries.create_entry(attrs)
       assert "must sum to zero" in errors_on(changeset).positions
     end
   end
@@ -898,10 +899,10 @@ end
 Use streams for large datasets:
 
 ```elixir
-def export_transactions(year) do
-  Transaction
+def export_entries(year) do
+  Entry
   # fragment allows raw SQL when Ecto doesn't have the function
-  |> where([t], fragment("YEAR(?)", t.date) == ^year)
+  |> where([e], fragment("YEAR(?)", e.date) == ^year)
   # Repo.stream returns a Stream, not loading all records at once
   |> Repo.stream()
   # Stream.map is lazy - only processes when consumed
@@ -959,21 +960,21 @@ Avoid N+1 queries:
 
 ```elixir
 # Bad - N+1 query problem
-transactions = Repo.all(Transaction)  # 1 query
-Enum.each(transactions, fn t ->
-  # This runs a query for EACH transaction (N queries)
-  positions = Repo.all(assoc(t, :positions))  # Query per transaction!
+entries = Repo.all(Entry)  # 1 query
+Enum.each(entries, fn e ->
+  # This runs a query for EACH entry (N queries)
+  positions = Repo.all(assoc(e, :positions))  # Query per entry!
 end)
-# Total: 1 + N queries (very slow for many transactions)
+# Total: 1 + N queries (very slow for many entries)
 
 # Good - preload associations
-transactions =
-  Transaction
+entries =
+  Entry
   |> preload(:positions)  # Tells Ecto to load positions efficiently
   |> Repo.all()
-# Total: 2 queries regardless of transaction count
-# 1st query: SELECT * FROM transactions
-# 2nd query: SELECT * FROM positions WHERE transaction_id IN (...)
+# Total: 2 queries regardless of entry count
+# 1st query: SELECT * FROM entries
+# 2nd query: SELECT * FROM positions WHERE entry_id IN (...)
 ```
 
 ## 11. Code Organization Patterns
@@ -1008,12 +1009,12 @@ def from_csv(row)             # CSV row -> Account struct
 Group related functionality:
 
 ```elixir
-defmodule Ledger.Transactions do
+defmodule Ledger.Entries do
   # Module structure convention:
 
   # 1. Public API at top - what other modules use
-  def create_transaction(attrs), do: ...
-  def list_transactions(opts), do: ...
+  def create_entry(attrs), do: ...
+  def list_entries(opts), do: ...
 
   # 2. Delegations - explicit dependencies
   defdelegate calculate_balance(account, date), to: BalanceCalculator

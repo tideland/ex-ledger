@@ -40,10 +40,6 @@ The action of recording an entry in the ledger, making it permanent and immutabl
 
 A reusable pattern for creating similar entries, with predefined accounts and optional default amounts.
 
-### Transaction / Transaktion
-
-Synonym for Entry. A recorded financial event in the ledger.
-
 ## User and Security Terms
 
 ### Admin / Administrator

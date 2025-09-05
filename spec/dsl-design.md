@@ -136,15 +136,15 @@ define_accounts do
 end
 ```
 
-## 5. Transaction DSL
+## 5. Entry DSL
 
-## 4. Transaction Entry DSL
+## 4. Entry DSL
 
-### 4.1 Basic Transaction Syntax
+### 4.1 Basic Entry Syntax
 
 ```
-# Simple transaction syntax - using hierarchical account names
-transaction do
+# Simple entry syntax - using hierarchical account names
+entry do
   date: 2024-01-15
   description: "Purchase office supplies"
 
@@ -153,7 +153,7 @@ transaction do
 end
 
 # Or with implicit conversion
-transaction do
+entry do
   date: 2024-01-15
   description: "Purchase office supplies"
 
@@ -162,11 +162,11 @@ transaction do
 end
 ```
 
-### 4.2 Multi-Position Transactions
+### 4.2 Multi-Position Entries
 
 ```
-# Multi-position transaction
-transaction do
+# Multi-position entry
+entry do
   date: 2024-01-20
   description: "Client payment with fees"
 
@@ -182,7 +182,7 @@ end
 
 ```
 # Tax relevance tagging
-transaction do
+entry do
   date: 2024-02-01
   description: "Craftsman invoice - renovation"
 
@@ -200,7 +200,7 @@ transaction do
 end
 ```
 
-## 6. Transaction Templates DSL
+## 6. Entry Templates DSL
 
 ### 5.1 Template Versioning
 
@@ -419,17 +419,17 @@ balance_of "Vermögen : Bank : Girokonto" at: 2024-01-31
 
 ### 7.2 Report Generation
 
-### 6.2 Transaction Queries
+### 6.2 Entry Queries
 
 ```
-# All transactions for an account
-transactions_for "Vermögen : Bank : Girokonto" do
+# All entries for an account
+entries_for "Vermögen : Bank : Girokonto" do
   from: 2024-01-01
   to: 2024-01-31
 end
 
-# Transactions matching criteria
-transactions where do
+# Entries matching criteria
+entries where do
   account: starts_with("Ausgaben")  # All expense accounts
   amount: greater_than(100.00)
   date: in_month(2024, 1)
@@ -455,10 +455,10 @@ end
 
 ## 8. Validation DSL
 
-### 7.1 Transaction Validation Rules
+### 7.1 Entry Validation Rules
 
 ```
-validate transaction do
+validate entry do
   must sum_to_zero
   must have_at_least_two_positions
   must have_valid_accounts
@@ -494,8 +494,8 @@ end
 ### 8.4 Custom Validation Rules
 
 ```
-# Transaction validation with conditions
-validate transaction do
+# Entry validation with conditions
+validate entry do
   when description: contains("Tax") do
     at_least_one position must have tax_relevant: true
   end
@@ -513,7 +513,7 @@ end
 ```
 # Roles are hardcoded in the system
 define_role :admin do
-  can :create, :update, :delete, :post on: Transaction
+  can :create, :update, :delete, :post on: Entry
   can :create, :update, :delete on: Account
   can :create, :update, :delete on: User
   can :create, :update, :delete on: Template
@@ -522,15 +522,15 @@ define_role :admin do
 end
 
 define_role :bookkeeper do
-  can :create, :update on: Transaction
-  can :post on: Transaction where created_by: current_user
-  can :view on: [Transaction, Account, Report, Template]
+  can :create, :update on: Entry
+  can :post on: Entry where created_by: current_user
+  can :view on: [Entry, Account, Report, Template]
   can :change_password for: current_user
   cannot :delete on: any
 end
 
 define_role :viewer do
-  can :view on: [Transaction, Account, Report]
+  can :view on: [Entry, Account, Report]
   can :change_password for: current_user
   cannot :create, :update, :delete, :post on: any
 end
@@ -548,14 +548,14 @@ end
 ### 9.1 CSV Import Mapping
 
 ```
-import_csv "transactions.csv" do
+import_csv "entries.csv" do
   map column: "Date" to: :date with: date_parser("dd.mm.yyyy")
   map column: "Description" to: :description
   map column: "Account" to: :account with: account_lookup
   map column: "Amount" to: :amount with: amount_parser
   map column: "Type" to: :type  # "debit" or "credit"
 
-  create_transaction for_each_row do |row|
+  create_entry for_each_row do |row|
     date: row.date
     description: row.description
 
@@ -599,7 +599,7 @@ This DSL provides:
 The DSL maps naturally to Elixir constructs:
 
 - `define_account` → Ecto schema definitions
-- `transaction do` → Transaction context functions
+- `entry do` → Entry context functions
 - `template` → Template module with apply functions
 - `validate` → Ecto changesets and custom validations
 - `balance_of` → Repo queries with aggregations

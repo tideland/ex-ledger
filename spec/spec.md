@@ -240,9 +240,9 @@ For detailed implementation guidance, refer to these companion documents:
 
 **Rationale**: Ensures transaction balance is maintained even with rounding. Example: 100/3 = [33.33, 33.33, 33.34].
 
-### REQ-03-06: Transaction Templates
+### REQ-03-06: Entry Templates
 
-**Requirement**: Reusable transaction templates with fractional distribution.
+**Requirement**: Reusable entry templates with fractional distribution.
 
 **Constraints**:
 
@@ -315,9 +315,9 @@ For detailed implementation guidance, refer to these companion documents:
 
 ## 7. Data Entry Requirements
 
-### REQ-05-01: Transaction Entry
+### REQ-05-01: Entry Creation
 
-**Requirement**: Efficient transaction entry with real-time validation.
+**Requirement**: Efficient entry creation with real-time validation.
 
 **Constraints**:
 
@@ -546,8 +546,8 @@ For detailed implementation guidance, refer to these companion documents:
 
 **Constraints**:
 
-- Transaction entry
-- Report generation for < 10,000 transactions
+- Entry creation
+- Report generation for < 10,000 entries
 - Account balance queries
 
 **Solution**: Indexed database queries, LiveView debouncing
@@ -556,7 +556,7 @@ For detailed implementation guidance, refer to these companion documents:
 
 ### REQ-10-02: Scalability
 
-**Requirement**: Handle thousands of transactions efficiently.
+**Requirement**: Handle thousands of entries efficiently.
 
 **Constraints**:
 
@@ -572,7 +572,7 @@ For detailed implementation guidance, refer to these companion documents:
 
 ### REQ-11-01: CSV Import
 
-**Requirement**: Import transactions from CSV files (future phase).
+**Requirement**: Import entries from CSV files (future phase).
 
 **Constraints**:
 

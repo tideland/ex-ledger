@@ -137,38 +137,38 @@ This document describes the web user interface design for the Tideland Ledger ap
 ### 4.2 LiveView Component States
 
 ```elixir
-# Transaction entry LiveView states
-defmodule LedgerWeb.TransactionLive do
+# Entry creation LiveView states
+defmodule LedgerWeb.EntryLive do
   use LedgerWeb, :live_view
 
   @impl true
   def mount(_params, _session, socket) do
     {:ok, assign(socket,
       state: :draft,
-      transaction: %Transaction{},
+      entry: %Entry{},
       errors: [],
       accounts: list_accounts()
     )}
   end
 
   # State transitions
-  def handle_event("validate", %{"transaction" => params}, socket) do
-    case validate_transaction(params) do
-      {:ok, transaction} ->
-        {:noreply, assign(socket, state: :validated, transaction: transaction)}
+  def handle_event("validate", %{"entry" => params}, socket) do
+    case validate_entry(params) do
+      {:ok, entry} ->
+        {:noreply, assign(socket, state: :validated, entry: entry)}
       {:error, errors} ->
         {:noreply, assign(socket, state: :error, errors: errors)}
     end
   end
 
   def handle_event("post", _params, socket) do
-    case post_transaction(socket.assigns.transaction) do
-      {:ok, transaction} ->
+    case post_entry(socket.assigns.entry) do
+      {:ok, entry} ->
         {:noreply,
          socket
-         |> assign(state: :posted, transaction: transaction)
+         |> assign(state: :posted, entry: entry)
          |> put_flash(:info, "Buchung erfolgreich")
-         |> push_redirect(to: Routes.transaction_path(socket, :show, transaction))}
+         |> push_redirect(to: Routes.entry_path(socket, :show, entry))}
       {:error, errors} ->
         {:noreply, assign(socket, state: :error, errors: errors)}
     end
@@ -242,9 +242,9 @@ color: var(--background-color);
 
 - Real-time balance updates
 - Click on account to view details
-- Click on transaction to edit
+- Click on entry to edit
 
-### 4.2 Transaction Entry (Neue Buchung)
+### 4.2 Entry Creation (Neue Buchung)
 
 **Purpose**: Create new bookkeeping entries
 
@@ -382,7 +382,7 @@ end
 
 ### 4.5 Template Management (Vorlagen)
 
-**Purpose**: Create and manage transaction templates
+**Purpose**: Create and manage entry templates
 
 **Layout**:
 
@@ -404,7 +404,7 @@ end
 └─────────────────────────────────────────────────────────────┘
 
 **Actions**:
-- [▶] = Apply template (opens transaction form with this version)
+- [▶] = Apply template (opens entry form with this version)
 - [📋] = Copy to create new version
 - [+] = Only shown for latest version (create next version)
 
@@ -566,10 +566,10 @@ end
 
 ## 6. LiveView Components
 
-### 6.1 Transaction Form Component
+### 6.1 Entry Form Component
 
 ```elixir
-defmodule LedgerWeb.TransactionLive.FormComponent do
+defmodule LedgerWeb.EntryLive.FormComponent do
   use LedgerWeb, :live_component
 
   # Handles real-time validation
@@ -602,7 +602,7 @@ defmodule LedgerWeb.Components.AmountInput do
   # Handles German decimal format (1.234,56)
   # Validates amount format with sign (+/-)
   # Supports both positive and negative amounts
-  # Shows running sum in transaction form
+  # Shows running sum in entry form
 end
 ```
 
@@ -611,14 +611,14 @@ end
 ### 7.1 Main Navigation Paths
 
 1. **Dashboard** → Quick access to all major functions
-2. **Transactions** → List → New/Edit → Save → Back to list
+2. **Entries** → List → New/Edit → Save → Back to list
 3. **Accounts** → List → Detail → Edit → Save
-4. **Templates** → List → New/Edit → Apply in transaction
+4. **Templates** → List → New/Edit → Apply in entry form
 5. **Reports** → Select type → Configure → Generate → Export
 
 ### 7.2 Keyboard Shortcuts
 
-- `Alt+N` - Neue Buchung (New transaction)
+- `Alt+N` - Neue Buchung (New entry)
 - `Alt+K` - Konten (Accounts)
 - `Alt+B` - Berichte (Reports)
 - `Tab` - Navigate between fields

@@ -43,7 +43,7 @@ This document specifies the import and export functionality for the Tideland Led
 }
 ```
 
-#### 2.2.2 Transaction Export
+#### 2.2.2 Entry Export
 
 **CSV Format**:
 
@@ -57,14 +57,14 @@ This document specifies the import and export functionality for the Tideland Led
 
 ```json
 {
-  "export_type": "transactions",
+  "export_type": "entries",
   "export_date": "2024-02-15T10:30:00Z",
   "version": "1.0",
   "date_range": {
     "from": "2024-02-01",
     "to": "2024-02-28"
   },
-  "transactions": [
+  "entries": [
     {
       "date": "2024-02-01",
       "reference": "2024-001",
@@ -92,7 +92,7 @@ This document specifies the import and export functionality for the Tideland Led
 defmodule Ledger.Export.Config do
   defstruct [
     :format,           # :csv or :json
-    :type,            # :accounts, :transactions, :trial_balance
+    :type,            # :accounts, :entries, :trial_balance
     :date_from,       # Date or nil
     :date_to,         # Date or nil
     :include_inactive, # boolean
@@ -135,7 +135,7 @@ end
 - Parent accounts must exist or be created first
 - Duplicate account paths are skipped (idempotency)
 
-#### 3.2.2 Transaction Import
+#### 3.2.2 Entry Import
 
 **Required Columns**:
 
@@ -154,8 +154,8 @@ end
 - Dates must be valid (DD.MM.YYYY or YYYY-MM-DD)
 - Amounts use German format (1.234,56) or international (1234.56)
 - Accounts must exist before import
-- Each transaction must balance (sum = 0)
-- Minimum two positions per transaction
+- Each entry must balance (sum = 0)
+- Minimum two positions per entry
 
 ### 3.3 Idempotency Rules
 
@@ -166,8 +166,8 @@ defmodule Ledger.Import.Idempotency do
     normalize_account_path(row["Kontonummer"])
   end
 
-  # Transaction idempotency: based on date + reference + amount hash
-  def transaction_key(positions) do
+  # Entry idempotency: based on date + reference + amount hash
+  def entry_key(positions) do
     date = positions |> List.first() |> Map.get("date")
     reference = positions |> List.first() |> Map.get("reference", "")
     amount_hash = positions
@@ -199,7 +199,7 @@ defmodule Ledger.Import.Result do
     invalid_date: "Ungültiges Datum",
     invalid_amount: "Ungültiger Betrag",
     account_not_found: "Konto nicht gefunden",
-    unbalanced_transaction: "Buchung nicht ausgeglichen"
+    unbalanced_entry: "Buchung nicht ausgeglichen"
   }
 end
 ```
@@ -354,7 +354,7 @@ end
 - File size limits (max 10MB)
 - Virus scanning before processing
 - Validation of all data before database writes
-- Transaction rollback on any error
+- Entry rollback on any error
 - Audit logging of all imports
 
 ### 7.2 Export Security

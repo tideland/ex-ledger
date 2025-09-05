@@ -80,49 +80,50 @@ TABLE accounts {
   INDEX idx_accounts_parent ON (parent_id)
 }
 
-// Transactions (Journal Entries)
-TABLE transactions {
+// Entries (Transactions)
+TABLE entries {
   FIELD id : ID
-  FIELD transaction_date : DATE [NOT NULL]
-  FIELD description : STRING(200) [NOT NULL]
-  FIELD reference_number : STRING(50) [NULL]
+  FIELD date : DATE [NOT NULL]
+  FIELD description : STRING(500) [NOT NULL]
+  FIELD reference : STRING(50) [NULL]
   FIELD status : ENUM[draft, posted, void] [NOT NULL, DEFAULT draft]
   FIELD posted_at : TIMESTAMP [NULL]
   FIELD voided_at : TIMESTAMP [NULL]
+  FIELD void_reason : STRING(500) [NULL]
   FIELD created_at : TIMESTAMP [NOT NULL, DEFAULT NOW]
   FIELD updated_at : TIMESTAMP [NOT NULL, DEFAULT NOW]
   FIELD created_by : INTEGER [NOT NULL]
   FIELD posted_by : INTEGER [NULL]
   FIELD voided_by : INTEGER [NULL]
 
-  CONSTRAINT fk_transactions_created_by FOREIGN KEY (created_by) REFERENCES users(id)
-  CONSTRAINT fk_transactions_posted_by FOREIGN KEY (posted_by) REFERENCES users(id)
-  CONSTRAINT fk_transactions_voided_by FOREIGN KEY (voided_by) REFERENCES users(id)
+  CONSTRAINT fk_entries_created_by FOREIGN KEY (created_by) REFERENCES users(id)
+  CONSTRAINT fk_entries_posted_by FOREIGN KEY (posted_by) REFERENCES users(id)
+  CONSTRAINT fk_entries_voided_by FOREIGN KEY (voided_by) REFERENCES users(id)
 
-  INDEX idx_transactions_date ON (transaction_date)
-  INDEX idx_transactions_status ON (status)
-  INDEX idx_transactions_reference ON (reference_number)
+  INDEX idx_entries_date ON (date)
+  INDEX idx_entries_status ON (status)
+  INDEX idx_entries_reference ON (reference)
 }
 
-// Transaction Lines (Double-entry lines)
-TABLE transaction_lines {
+// Positions (Line items within entries)
+TABLE positions {
   FIELD id : ID
-  FIELD transaction_id : INTEGER [NOT NULL]
+  FIELD entry_id : INTEGER [NOT NULL]
   FIELD account_id : INTEGER [NOT NULL]
   FIELD description : STRING(200) [NULL]
   FIELD amount : DECIMAL(15,2) [NOT NULL]  // Positive = Debit, Negative = Credit
-  FIELD tax_relevant : BOOLEAN [NOT NULL, DEFAULT false]
-  FIELD position : INTEGER [NOT NULL]  // Order within transaction
+  FIELD tax_relevant : BOOLEAN [NOT NULL, DEFAULT FALSE]
+  FIELD position : INTEGER [NOT NULL]  // Order within entry
   FIELD created_at : TIMESTAMP [NOT NULL, DEFAULT NOW]
   FIELD updated_at : TIMESTAMP [NOT NULL, DEFAULT NOW]
 
-  CONSTRAINT fk_lines_transaction FOREIGN KEY (transaction_id) REFERENCES transactions(id)
-  CONSTRAINT fk_lines_account FOREIGN KEY (account_id) REFERENCES accounts(id)
-  CONSTRAINT chk_lines_amount CHECK (amount != 0)
+  CONSTRAINT fk_positions_entry FOREIGN KEY (entry_id) REFERENCES entries(id)
+  CONSTRAINT fk_positions_account FOREIGN KEY (account_id) REFERENCES accounts(id)
+  CONSTRAINT chk_positions_amount CHECK (amount != 0)
 
-  INDEX idx_lines_transaction ON (transaction_id)
-  INDEX idx_lines_account ON (account_id)
-  INDEX idx_lines_tax_relevant ON (tax_relevant)
+  INDEX idx_positions_entry ON (entry_id)
+  INDEX idx_positions_account ON (account_id)
+  INDEX idx_positions_tax_relevant ON (tax_relevant)
 }
 
 // Transaction Templates
@@ -215,16 +216,16 @@ RELATION accounts_hierarchy {
   CASCADE restrict
 }
 
-RELATION transactions_have_lines {
-  FROM transactions.id
-  TO transaction_lines.transaction_id
+RELATION entries_have_positions {
+  FROM entries.id
+  TO positions.entry_id
   TYPE one_to_many
   CASCADE delete
 }
 
-RELATION accounts_have_lines {
+RELATION accounts_have_positions {
   FROM accounts.id
-  TO transaction_lines.account_id
+  TO positions.account_id
   TYPE one_to_many
   CASCADE restrict
 }
@@ -240,10 +241,10 @@ RELATION templates_have_lines {
 ### 1.4 Business Rules in DSL
 
 ```dsl
-RULE balanced_transaction {
-  FOR EACH transaction
+RULE balanced_entry {
+  FOR EACH entry
   WHERE status = 'posted'
-  ASSERT SUM(transaction_lines.amount) = 0
+  ASSERT SUM(positions.amount) = 0
 }
 
 RULE valid_account_hierarchy {
@@ -253,31 +254,31 @@ RULE valid_account_hierarchy {
 }
 
 RULE no_void_modifications {
-  FOR EACH transaction
+  FOR EACH entry
   WHERE status = 'void'
-  DENY UPDATE EXCEPT (voided_at, voided_by)
+  DENY UPDATE EXCEPT (voided_at, voided_by, void_reason)
 }
 
-RULE minimum_transaction_lines {
-  FOR EACH transaction
-  ASSERT COUNT(transaction_lines) >= 2  -- Even simplified ledger needs at least 2 lines
+RULE minimum_positions {
+  FOR EACH entry
+  ASSERT COUNT(positions) >= 2  -- Even simplified ledger needs at least 2 positions
 }
 
-RULE transaction_must_balance {
-  FOR EACH transaction
-  ASSERT SUM(transaction_lines.amount) = 0  -- All transactions must balance to zero
+RULE entry_must_balance {
+  FOR EACH entry
+  ASSERT SUM(positions.amount) = 0  -- All entries must balance to zero
 }
 
 RULE period_lock_enforcement {
-  FOR EACH transaction
+  FOR EACH entry
   WHERE status = 'posted'
-  ASSERT transaction_date NOT IN locked_periods
+  ASSERT date NOT IN locked_periods
   UNLESS current_user.role = 'admin'
 }
 
 RULE audit_trail_requirement {
   FOR EACH INSERT, UPDATE, DELETE
-  ON accounts, transactions, transaction_lines
+  ON accounts, entries, positions
   CREATE audit_log entry
 }
 ```
@@ -323,15 +324,16 @@ CREATE TABLE accounts (
 CREATE INDEX idx_accounts_code ON accounts(code);
 CREATE INDEX idx_accounts_parent ON accounts(parent_id);
 
--- Transactions table
-CREATE TABLE transactions (
+-- Entries table
+CREATE TABLE entries (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    transaction_date DATE NOT NULL,
+    date DATE NOT NULL,
     description TEXT NOT NULL,
-    reference_number TEXT,
+    reference TEXT,
     status TEXT NOT NULL DEFAULT 'draft' CHECK (status IN ('draft', 'posted', 'void')),
     posted_at DATETIME,
     voided_at DATETIME,
+    void_reason TEXT,
     created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     created_by INTEGER NOT NULL,
@@ -342,14 +344,14 @@ CREATE TABLE transactions (
     FOREIGN KEY (voided_by) REFERENCES users(id) ON DELETE RESTRICT
 );
 
-CREATE INDEX idx_transactions_date ON transactions(transaction_date);
-CREATE INDEX idx_transactions_status ON transactions(status);
-CREATE INDEX idx_transactions_reference ON transactions(reference_number);
+CREATE INDEX idx_entries_date ON entries(date);
+CREATE INDEX idx_entries_status ON entries(status);
+CREATE INDEX idx_entries_reference ON entries(reference);
 
--- Transaction lines table
-CREATE TABLE transaction_lines (
+-- Positions table
+CREATE TABLE positions (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    transaction_id INTEGER NOT NULL,
+    entry_id INTEGER NOT NULL,
     account_id INTEGER NOT NULL,
     description TEXT,
     amount DECIMAL(15,2) NOT NULL,
@@ -357,14 +359,15 @@ CREATE TABLE transaction_lines (
     position INTEGER NOT NULL,
     created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (transaction_id) REFERENCES transactions(id) ON DELETE CASCADE,
+    FOREIGN KEY (entry_id) REFERENCES entries(id) ON DELETE CASCADE,
     FOREIGN KEY (account_id) REFERENCES accounts(id) ON DELETE RESTRICT,
     CHECK (amount != 0)
 );
 
-CREATE INDEX idx_lines_transaction ON transaction_lines(transaction_id);
-CREATE INDEX idx_lines_account ON transaction_lines(account_id);
-CREATE INDEX idx_lines_tax_relevant ON transaction_lines(tax_relevant);
+CREATE INDEX idx_positions_entry ON positions(entry_id);
+CREATE INDEX idx_positions_account ON positions(account_id);
+CREATE INDEX idx_positions_tax_relevant ON positions(tax_relevant);
+CREATE INDEX idx_positions_order ON positions(entry_id, position);
 
 -- Audit log table
 CREATE TABLE audit_log (
@@ -400,18 +403,19 @@ CREATE INDEX idx_period_locks_dates ON period_locks(period_start, period_end);
 -- Templates table
 CREATE TABLE templates (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    code TEXT NOT NULL UNIQUE,
     name TEXT NOT NULL,
+    version INTEGER NOT NULL DEFAULT 1,
     description TEXT,
     default_total DECIMAL(15,2),
     active INTEGER NOT NULL DEFAULT 1,
     created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     created_by INTEGER NOT NULL,
-    FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE RESTRICT
+    FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE RESTRICT,
+    UNIQUE(name, version)
 );
 
-CREATE INDEX idx_templates_code ON templates(code);
+CREATE INDEX idx_templates_name ON templates(name);
 CREATE INDEX idx_templates_active ON templates(active);
 
 -- Template lines table
@@ -483,16 +487,16 @@ BEGIN
     UPDATE accounts SET updated_at = CURRENT_TIMESTAMP WHERE id = NEW.id;
 END;
 
-CREATE TRIGGER update_transactions_timestamp
-AFTER UPDATE ON transactions
+CREATE TRIGGER update_entries_timestamp
+AFTER UPDATE ON entries
 BEGIN
-    UPDATE transactions SET updated_at = CURRENT_TIMESTAMP WHERE id = NEW.id;
+    UPDATE entries SET updated_at = CURRENT_TIMESTAMP WHERE id = NEW.id;
 END;
 
-CREATE TRIGGER update_transaction_lines_timestamp
-AFTER UPDATE ON transaction_lines
+CREATE TRIGGER update_positions_timestamp
+AFTER UPDATE ON positions
 BEGIN
-    UPDATE transaction_lines SET updated_at = CURRENT_TIMESTAMP WHERE id = NEW.id;
+    UPDATE positions SET updated_at = CURRENT_TIMESTAMP WHERE id = NEW.id;
 END;
 
 CREATE TRIGGER update_templates_timestamp
@@ -511,39 +515,39 @@ BEGIN
             NEW.created_by);
 END;
 
-CREATE TRIGGER audit_transactions_update
-AFTER UPDATE ON transactions
+CREATE TRIGGER audit_entries_update
+AFTER UPDATE ON entries
 WHEN NEW.status != OLD.status
 BEGIN
     INSERT INTO audit_log (table_name, record_id, action, changed_data, user_id)
-    VALUES ('transactions', NEW.id, 'update',
+    VALUES ('entries', NEW.id, 'update',
             json_object('old_status', OLD.status, 'new_status', NEW.status),
             COALESCE(NEW.posted_by, NEW.voided_by, NEW.created_by));
 END;
 
 -- Balance check trigger
-CREATE TRIGGER check_transaction_balance
-BEFORE UPDATE ON transactions
+CREATE TRIGGER check_entry_balance
+BEFORE UPDATE ON entries
 WHEN NEW.status = 'posted' AND OLD.status = 'draft'
 BEGIN
     SELECT CASE
         WHEN (SELECT SUM(amount)
-              FROM transaction_lines
-              WHERE transaction_id = NEW.id) != 0
-        THEN RAISE(ABORT, 'Transaction is not balanced')
+              FROM positions
+              WHERE entry_id = NEW.id) != 0
+        THEN RAISE(ABORT, 'Entry is not balanced')
     END;
 END;
 
--- Minimum transaction lines check
-CREATE TRIGGER check_minimum_lines
-BEFORE UPDATE ON transactions
+-- Minimum positions check
+CREATE TRIGGER check_minimum_positions
+BEFORE UPDATE ON entries
 WHEN NEW.status = 'posted' AND OLD.status = 'draft'
 BEGIN
     SELECT CASE
         WHEN (SELECT COUNT(*)
-              FROM transaction_lines
-              WHERE transaction_id = NEW.id) < 2
-        THEN RAISE(ABORT, 'Transaction must have at least 2 lines')
+              FROM positions
+              WHERE entry_id = NEW.id) < 2
+        THEN RAISE(ABORT, 'Entry must have at least 2 positions')
     END;
 END;
 ```
@@ -566,29 +570,29 @@ WITH RECURSIVE account_tree AS (
 )
 SELECT * FROM account_tree;
 
--- Transaction details view
-CREATE VIEW v_transaction_details AS
+-- Entry details view
+CREATE VIEW v_entry_details AS
 SELECT
-    t.id,
-    t.transaction_date,
-    t.description,
-    t.reference_number,
-    t.status,
-    tl.position,
-    tl.account_id,
-    a.code as account_code,
+    e.id,
+    e.date,
+    e.description,
+    e.reference,
+    e.status,
+    p.position,
+    p.account_id,
+    a.path as account_path,
     a.name as account_name,
-    tl.description as line_description,
-    tl.amount,
-    CASE WHEN tl.amount > 0 THEN tl.amount ELSE 0 END as debit_amount,
-    CASE WHEN tl.amount < 0 THEN ABS(tl.amount) ELSE 0 END as credit_amount,
-    tl.tax_relevant,
+    p.description as position_description,
+    p.amount,
+    CASE WHEN p.amount > 0 THEN p.amount ELSE 0 END as debit_amount,
+    CASE WHEN p.amount < 0 THEN ABS(p.amount) ELSE 0 END as credit_amount,
+    p.tax_relevant,
     u.username as created_by_username
-FROM transactions t
-INNER JOIN transaction_lines tl ON t.id = tl.transaction_id
-INNER JOIN accounts a ON tl.account_id = a.id
-INNER JOIN users u ON t.created_by = u.id
-ORDER BY t.transaction_date DESC, t.id, tl.position;
+FROM entries e
+INNER JOIN positions p ON e.id = p.entry_id
+INNER JOIN accounts a ON p.account_id = a.id
+INNER JOIN users u ON e.created_by = u.id
+ORDER BY e.date DESC, e.id, p.position;
 
 -- Current account balances view
 CREATE VIEW v_account_balances AS
@@ -600,9 +604,9 @@ SELECT
     COALESCE(SUM(CASE WHEN tl.amount < 0 THEN ABS(tl.amount) ELSE 0 END), 0) as total_credit,
     COALESCE(SUM(tl.amount), 0) as balance
 FROM accounts a
-LEFT JOIN transaction_lines tl ON a.id = tl.account_id
-LEFT JOIN transactions t ON tl.transaction_id = t.id AND t.status = 'posted'
-GROUP BY a.id, a.code, a.name;
+LEFT JOIN positions p ON a.id = p.account_id
+LEFT JOIN entries e ON p.entry_id = e.id AND e.status = 'posted'
+GROUP BY a.id, a.path, a.name;
 ```
 
 ### 2.4 Common Queries
@@ -615,33 +619,33 @@ SELECT
     SUM(CASE WHEN amount > 0 THEN amount ELSE 0 END) as debit_total,
     SUM(CASE WHEN amount < 0 THEN ABS(amount) ELSE 0 END) as credit_total,
     SUM(amount) as balance
-FROM v_transaction_details
+FROM v_entry_details
 WHERE status = 'posted'
-GROUP BY account_id, code, name
-ORDER BY code;
+GROUP BY account_id, account_path, account_name
+ORDER BY account_path;
 
 -- Get account statement
 SELECT
-    transaction_date,
-    reference_number,
+    date,
+    reference,
     description,
     amount,
-    SUM(amount) OVER (ORDER BY transaction_date, id) as running_balance
-FROM v_transaction_details
-WHERE account_code = ? AND status = 'posted'
-ORDER BY transaction_date, id;
+    SUM(amount) OVER (ORDER BY date, id) as running_balance
+FROM v_entry_details
+WHERE account_path = ? AND status = 'posted'
+ORDER BY date, id;
 
--- Check for unbalanced transactions
+-- Check for unbalanced entries
 SELECT
     id,
-    transaction_date,
+    date,
     description,
-    SUM(CASE WHEN tl.amount > 0 THEN tl.amount ELSE 0 END) as total_debit,
-    SUM(CASE WHEN tl.amount < 0 THEN ABS(tl.amount) ELSE 0 END) as total_credit,
-    SUM(tl.amount) as imbalance
-FROM transactions t
-INNER JOIN transaction_lines tl ON t.id = tl.transaction_id
-GROUP BY t.id, t.transaction_date, t.description
+    SUM(CASE WHEN p.amount > 0 THEN p.amount ELSE 0 END) as total_debit,
+    SUM(CASE WHEN p.amount < 0 THEN ABS(p.amount) ELSE 0 END) as total_credit,
+    SUM(p.amount) as imbalance
+FROM entries e
+INNER JOIN positions p ON e.id = p.entry_id
+GROUP BY e.id, e.date, e.description
 HAVING imbalance != 0;
 ```
 

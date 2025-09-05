@@ -488,6 +488,68 @@ defmodule LedgerWeb.TransactionController do
 end
 ```
 
+### 5.3 Transaction Context Implementation
+
+The Transactions context demonstrates advanced patterns:
+
+```elixir
+defmodule Ledger.Transactions do
+  # Uses Ecto.Multi for complex multi-step operations
+  def post_entry(%Entry{} = entry, user_id) do
+    Multi.new()
+    |> Multi.run(:validate_can_post, fn _, _ ->
+      if Entry.can_post?(entry) do
+        {:ok, true}
+      else
+        {:error, :already_posted}
+      end
+    end)
+    |> Multi.run(:validate_period, fn _, _ ->
+      validate_period_open(entry.date)
+    end)
+    |> Multi.run(:validate_accounts_active, fn _, _ ->
+      validate_all_accounts_active(entry)
+    end)
+    |> Multi.update(:entry, Entry.post_changeset(entry, user_id))
+    |> Multi.run(:create_audit_log, fn _, %{entry: posted_entry} ->
+      create_audit_log(posted_entry, :posted, user_id)
+    end)
+    |> Repo.transaction()
+  end
+
+  # Voiding creates automatic reversal entries
+  def void_entry(%Entry{} = entry, user_id, reason) do
+    Multi.new()
+    |> Multi.update(:void_entry, Entry.void_changeset(entry, user_id, reason))
+    |> Multi.run(:create_reversal, fn _, %{void_entry: voided_entry} ->
+      create_reversal_entry(voided_entry, user_id)
+    end)
+    |> Repo.transaction()
+  end
+
+  # Complex queries with flexible filtering
+  def list_entries(opts \\ []) do
+    Entry
+    |> filter_by_status(opts[:status])
+    |> filter_by_date_range(opts[:from_date], opts[:to_date])
+    |> filter_by_account(opts[:account_id])
+    |> filter_by_search(opts[:search])
+    |> order_by([e], desc: e.date, desc: e.id)
+    |> limit_offset(opts[:limit], opts[:offset])
+    |> maybe_preload(opts[:preload] || [:positions])
+    |> Repo.all()
+  end
+end
+```
+
+Key patterns used:
+
+- Ecto.Multi for transactional operations with multiple steps
+- Automatic reversal generation for voiding
+- Composable query functions for flexible filtering
+- Structured error handling with atoms
+- Preloading control to avoid N+1 queries
+
 ### 6.2 LiveView Pattern
 
 Stateful UI without JavaScript:

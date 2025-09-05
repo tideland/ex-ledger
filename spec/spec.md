@@ -63,7 +63,7 @@ For detailed implementation guidance, refer to these companion documents:
 
 ## 3. Core System Requirements
 
-### REQ-001: Programming Language and Framework
+### REQ-01-01: Programming Language and Framework
 
 **Requirement**: The system must be implemented in Elixir using the Phoenix Framework.
 
@@ -77,7 +77,7 @@ For detailed implementation guidance, refer to these companion documents:
 
 **Rationale**: Elixir provides excellent fault tolerance, concurrent processing capabilities, and clean functional programming patterns ideal for financial calculations. Phoenix offers a mature web framework with LiveView for real-time UI without JavaScript complexity.
 
-### REQ-002: Database System
+### REQ-01-02: Database System
 
 **Requirement**: Use SQLite for data persistence.
 
@@ -91,7 +91,7 @@ For detailed implementation guidance, refer to these companion documents:
 
 **Rationale**: SQLite provides full ACID compliance, zero-configuration deployment, and simple file-based backups. Perfect for single-tenant bookkeeping systems where all data fits on one machine.
 
-### REQ-003: User Interface Technology
+### REQ-01-03: User Interface Technology
 
 **Requirement**: Web-based user interface without Node.js or complex JavaScript frameworks.
 
@@ -105,7 +105,7 @@ For detailed implementation guidance, refer to these companion documents:
 
 **Rationale**: LiveView provides real-time interactivity through WebSockets while keeping all logic in Elixir. This eliminates JavaScript complexity while delivering modern UX. The ~29KB LiveView runtime is maintained by the Phoenix team.
 
-### REQ-004: Configuration Management
+### REQ-01-04: Configuration Management
 
 **Requirement**: All configuration must be externalized to TOML files.
 
@@ -119,9 +119,9 @@ For detailed implementation guidance, refer to these companion documents:
 
 **Rationale**: TOML is more readable than JSON or YAML for configuration. It's well-supported in Elixir and allows comments. The Config.Provider pattern enables runtime configuration changes.
 
-## 3. Authentication and Authorization Requirements
+## 4. Authentication and Authorization Requirements
 
-### REQ-005: Authentication Service
+### REQ-02-01: Authentication Service
 
 **Requirement**: Use external Tideland Auth service for authentication.
 
@@ -135,7 +135,7 @@ For detailed implementation guidance, refer to these companion documents:
 
 **Rationale**: Separating authentication from the application follows security best practices and allows centralized user management across multiple Tideland applications.
 
-### REQ-006: Authorization Roles
+### REQ-02-02: Authorization Roles
 
 **Requirement**: Three hardcoded roles: Admin, Bookkeeper (Buchhalter), Viewer (Betrachter).
 
@@ -149,7 +149,7 @@ For detailed implementation guidance, refer to these companion documents:
 
 **Rationale**: Fixed roles simplify the authorization model and ensure consistent permissions across deployments. The hardcoded admin account ensures system recovery options.
 
-### REQ-007: Multi-tenancy
+### REQ-02-03: Multi-tenancy
 
 **Requirement**: Single-tenant system with one set of books shared by all users.
 
@@ -163,9 +163,9 @@ For detailed implementation guidance, refer to these companion documents:
 
 **Rationale**: Simplifies the data model and matches typical small business needs where all users work on the same set of books.
 
-## 4. Accounting Domain Requirements
+## 5. Accounting Domain Requirements
 
-### REQ-008: Simplified Ledger-Style Bookkeeping
+### REQ-03-01: Simplified Ledger-Style Bookkeeping
 
 **Requirement**: Implement simplified ledger-style bookkeeping.
 
@@ -174,12 +174,13 @@ For detailed implementation guidance, refer to these companion documents:
 - No double-entry with debit/credit
 - Simple income and expense tracking
 - No system-enforced account types
+- Entries must have at least 2 positions that balance to zero
 
-**Solution**: Transaction model with positions, simplified validation
+**Solution**: Entry model with positions, simplified validation
 
 **Rationale**: Simplified ledger style provides ease of use for basic bookkeeping needs without the complexity of double-entry accounting.
 
-### REQ-009: Account Structure
+### REQ-03-02: Account Structure
 
 **Requirement**: Hierarchical account structure using string-based naming.
 
@@ -193,7 +194,7 @@ For detailed implementation guidance, refer to these companion documents:
 
 **Rationale**: Path-based structure is self-documenting and eliminates the need for separate parent ID tracking. It mirrors file system paths, making it intuitive.
 
-### REQ-010: Amount Representation
+### REQ-03-03: Amount Representation
 
 **Requirement**: Signed decimal amounts instead of separate debit/credit fields.
 
@@ -207,7 +208,22 @@ For detailed implementation guidance, refer to these companion documents:
 
 **Rationale**: Signed amounts simplify data entry and calculations. Users enter +1500 or -1500 instead of choosing debit/credit columns. This is more intuitive for non-accountants.
 
-### REQ-011: Amount Distribution
+### REQ-03-04: Entry Voiding via Reversal
+
+**Requirement**: Voided entries are handled through automatic reversal entries.
+
+**Constraints**:
+
+- Original entries remain immutable after posting
+- Void operation creates compensating reversal entry
+- Reversal entry is automatically posted
+- Audit trail maintained with void reason
+
+**Solution**: Automatic reversal generation with negated amounts
+
+**Rationale**: This approach maintains complete audit trail and ensures data integrity. The original entry remains for historical accuracy while the reversal cancels its financial effect.
+
+### REQ-03-05: Amount Distribution
 
 **Requirement**: Correct distribution when splitting amounts (e.g., 100/3).
 
@@ -221,7 +237,7 @@ For detailed implementation guidance, refer to these companion documents:
 
 **Rationale**: Ensures transaction balance is maintained even with rounding. Example: 100/3 = [33.33, 33.33, 33.34].
 
-### REQ-012: Transaction Templates
+### REQ-03-06: Transaction Templates
 
 **Requirement**: Reusable transaction templates with fractional distribution.
 
@@ -235,7 +251,7 @@ For detailed implementation guidance, refer to these companion documents:
 
 **Rationale**: Fractions/percentages are more flexible than fixed amounts. A rent template can work whether rent is 1000 or 1500 by using fractions.
 
-### REQ-013: Tax Relevance Tracking
+### REQ-03-07: Tax Relevance Tracking
 
 **Requirement**: Mark individual positions as tax-relevant.
 
@@ -249,9 +265,9 @@ For detailed implementation guidance, refer to these companion documents:
 
 **Rationale**: German tax law often requires splitting invoices. Position-level tracking provides the necessary granularity.
 
-## 5. User Interface Requirements
+## 6. User Interface Requirements
 
-### REQ-014: Language
+### REQ-04-01: Language
 
 **Requirement**: German-only user interface.
 
@@ -265,7 +281,7 @@ For detailed implementation guidance, refer to these companion documents:
 
 **Rationale**: The application targets German users. Keeping code in English maintains compatibility with the broader Elixir ecosystem.
 
-### REQ-015: Visual Design
+### REQ-04-02: Visual Design
 
 **Requirement**: Simple, flat design like mainframe terminals.
 
@@ -280,7 +296,7 @@ For detailed implementation guidance, refer to these companion documents:
 
 **Rationale**: Simplicity reduces maintenance and focuses users on functionality rather than aesthetics. Terminal-like design reinforces the "tool" nature of the application.
 
-### REQ-016: Navigation Structure
+### REQ-04-03: Navigation Structure
 
 **Requirement**: Clear, flat navigation without dropdowns.
 
@@ -294,9 +310,9 @@ For detailed implementation guidance, refer to these companion documents:
 
 **Rationale**: Vertical menus work better with unknown page widths and provide room for German text. Flat navigation reduces cognitive load.
 
-## 6. Data Entry Requirements
+## 7. Data Entry Requirements
 
-### REQ-017: Transaction Entry
+### REQ-05-01: Transaction Entry
 
 **Requirement**: Efficient transaction entry with real-time validation.
 
@@ -310,7 +326,7 @@ For detailed implementation guidance, refer to these companion documents:
 
 **Rationale**: Immediate feedback prevents errors. LiveView eliminates round-trips while keeping logic server-side.
 
-### REQ-018: Account Selection
+### REQ-05-02: Account Selection
 
 **Requirement**: Account selection supporting hierarchical paths.
 
@@ -324,7 +340,7 @@ For detailed implementation guidance, refer to these companion documents:
 
 **Rationale**: Full paths provide context. Search enables quick selection even with hundreds of accounts.
 
-### REQ-019: Date Handling
+### REQ-05-03: Date Handling
 
 **Requirement**: ISO 8601 date format throughout the system.
 
@@ -338,9 +354,9 @@ For detailed implementation guidance, refer to these companion documents:
 
 **Rationale**: ISO 8601 eliminates ambiguity between DD/MM and MM/DD formats and sorts naturally.
 
-## 7. Reporting Requirements
+## 8. Reporting Requirements
 
-### REQ-020: Standard Reports
+### REQ-06-01: Standard Reports
 
 **Requirement**: Generate standard accounting reports.
 
@@ -355,7 +371,7 @@ For detailed implementation guidance, refer to these companion documents:
 
 **Rationale**: Since account types aren't system-enforced, reports interpret accounts based on their codes according to the chosen numbering scheme.
 
-### REQ-021: Export Capabilities
+### REQ-06-02: Export Capabilities
 
 **Requirement**: Export reports in common formats.
 
@@ -369,9 +385,9 @@ For detailed implementation guidance, refer to these companion documents:
 
 **Rationale**: CSV provides immediate value for Excel users. PDF can be added when needed.
 
-## 8. Technical Architecture Requirements
+## 9. Security and Authorization Requirements
 
-### REQ-022: Code Organization
+### REQ-07-01: Authentication Integration
 
 **Requirement**: Follow Phoenix conventions with clear separation of concerns.
 
@@ -385,7 +401,51 @@ For detailed implementation guidance, refer to these companion documents:
 
 **Rationale**: Following conventions makes the codebase maintainable and familiar to other Elixir developers.
 
-### REQ-023: Testing Strategy
+### REQ-07-02: Role-Based Access Control
+
+**Requirement**: Enforce role-based permissions throughout the system.
+
+**Constraints**:
+
+- Admin: Full system access
+- Bookkeeper: Create and post transactions
+- Viewer: Read-only access
+
+**Solution**: Plug-based authorization with role checks
+
+**Rationale**: Consistent authorization ensures data security and prevents unauthorized operations.
+
+## 10. Code Quality Requirements
+
+### REQ-08-01: Code Organization
+
+**Requirement**: Follow Elixir and Phoenix conventions.
+
+**Constraints**:
+
+- Domain-driven design with contexts
+- Clear separation of concerns
+- Comprehensive documentation
+
+**Solution**: Phoenix contexts, separate business logic from web layer
+
+**Rationale**: Good organization is crucial for maintainability, especially in a learning project.
+
+### REQ-08-02: Documentation Standards
+
+**Requirement**: Comprehensive documentation at all levels.
+
+**Constraints**:
+
+- Module documentation with examples
+- Function specs with @doc and @spec
+- Semantic comments explaining why, not what
+
+**Solution**: ExDoc with comprehensive @moduledoc and @doc
+
+**Rationale**: Good documentation is essential for learning projects and maintainability.
+
+### REQ-08-03: Testing Strategy
 
 **Requirement**: Comprehensive test coverage.
 
@@ -393,13 +453,13 @@ For detailed implementation guidance, refer to these companion documents:
 
 - Unit tests for business logic
 - Integration tests for workflows
-- Test data factories
+- Property-based tests for Amount type
 
-**Solution**: ExUnit with test factories and database sandboxing
+**Solution**: ExUnit with proper test organization
 
 **Rationale**: Good test coverage is essential for financial software. Database sandboxing enables parallel test execution.
 
-### REQ-024: Error Handling
+### REQ-08-04: Error Handling
 
 **Requirement**: Graceful error handling with user-friendly messages.
 
@@ -415,7 +475,7 @@ For detailed implementation guidance, refer to these companion documents:
 
 **Rationale**: Users need clear guidance when errors occur. Technical details belong in logs, not user interfaces. Separating error symbols from translations enables proper internationalization.
 
-### REQ-024b: Internationalization Architecture
+### REQ-08-05: Internationalization Architecture
 
 **Requirement**: Clear separation between business logic and UI translations.
 
@@ -430,9 +490,9 @@ For detailed implementation guidance, refer to these companion documents:
 
 **Rationale**: This separation enables future multi-language support and keeps business logic pure. It also makes testing easier as business logic tests don't depend on specific message strings.
 
-## 9. Development Requirements
+## 11. Deployment Requirements
 
-### REQ-025: Package Distribution
+### REQ-09-01: Package Distribution
 
 **Requirement**: Distribute as Hex package "tideland-ledger".
 
@@ -446,7 +506,7 @@ For detailed implementation guidance, refer to these companion documents:
 
 **Rationale**: Hex is the standard package manager for Elixir. The naming follows Tideland conventions.
 
-### REQ-026: Configuration Deployment
+### REQ-09-02: Configuration Deployment
 
 **Requirement**: Support multiple deployment scenarios.
 
@@ -460,7 +520,7 @@ For detailed implementation guidance, refer to these companion documents:
 
 **Rationale**: Different deployment targets have different filesystem conventions. Configurability enables flexibility.
 
-### REQ-027: Database Location
+### REQ-09-03: Database Location
 
 **Requirement**: Configurable SQLite database location.
 
@@ -474,9 +534,9 @@ For detailed implementation guidance, refer to these companion documents:
 
 **Rationale**: SQLite databases are files, making backup simple. Platform-specific defaults follow OS conventions.
 
-## 10. Performance Requirements
+## 12. Performance Requirements
 
-### REQ-028: Response Times
+### REQ-10-01: Response Times
 
 **Requirement**: Sub-second response for common operations.
 
@@ -490,7 +550,7 @@ For detailed implementation guidance, refer to these companion documents:
 
 **Rationale**: Users expect responsive interfaces. Proper indexing and debouncing prevent performance issues.
 
-### REQ-029: Scalability
+### REQ-10-02: Scalability
 
 **Requirement**: Handle thousands of transactions efficiently.
 
@@ -504,9 +564,9 @@ For detailed implementation guidance, refer to these companion documents:
 
 **Rationale**: SQLite can handle millions of rows. Pagination and smart queries keep the UI responsive.
 
-## 11. Future Considerations
+## 13. Future Considerations
 
-### REQ-030: CSV Import
+### REQ-11-01: CSV Import
 
 **Requirement**: Import transactions from CSV files (future phase).
 
@@ -520,7 +580,7 @@ For detailed implementation guidance, refer to these companion documents:
 
 **Rationale**: Many users have existing data in spreadsheets. CSV import enables migration.
 
-### REQ-031: Backup Integration
+### REQ-11-02: Backup Integration
 
 **Requirement**: Automated backup functionality.
 
@@ -534,9 +594,9 @@ For detailed implementation guidance, refer to these companion documents:
 
 **Rationale**: SQLite's backup command ensures consistent backups even during writes.
 
-## 12. Testing Strategy
+## 14. Testing Requirements
 
-### REQ-032: Comprehensive Test Coverage
+### REQ-12-01: Comprehensive Test Coverage
 
 **Requirement**: Implement comprehensive testing for all system components.
 
@@ -559,7 +619,7 @@ For detailed implementation guidance, refer to these companion documents:
 4. **LiveView Tests**: UI interactions, form validation
 5. **Golden File Tests**: Report outputs, export formats
 
-### REQ-033: Test Data Management
+### REQ-12-02: Test Data Management
 
 **Requirement**: Consistent test data for development and testing.
 
@@ -573,9 +633,9 @@ For detailed implementation guidance, refer to these companion documents:
 
 **Rationale**: Consistent test data enables reliable testing and demonstrations.
 
-## 13. Amount and Precision Policy
+## 15. Amount and Precision Requirements
 
-### REQ-034: Amount Storage and Precision
+### REQ-13-01: Amount Storage and Precision
 
 **Requirement**: Precise financial calculations without rounding errors.
 
@@ -589,7 +649,22 @@ For detailed implementation guidance, refer to these companion documents:
 
 **Rationale**: Storing amounts as integers eliminates floating-point errors. Banker's rounding ensures fair distribution.
 
-### REQ-035: Amount Distribution
+### REQ-13-02: Custom Ecto Type for Amount
+
+**Requirement**: Database storage of Amount values through custom Ecto type.
+
+**Constraints**:
+
+- Seamless conversion between Amount structs and database
+- Store as map with cents and currency fields
+- Handle casting from various input formats
+- Maintain type safety throughout application
+
+**Solution**: Custom Ecto type (Ledger.EctoTypes.Amount) with cast/load/dump functions
+
+**Rationale**: Custom types ensure Amount values are properly handled at all layers. This prevents accidental precision loss and maintains consistency between application and database representations.
+
+### REQ-13-03: Amount Distribution
 
 **Requirement**: Fair distribution when splitting amounts.
 
@@ -603,7 +678,7 @@ For detailed implementation guidance, refer to these companion documents:
 
 **Rationale**: Common pattern in financial systems. Adding remainder to last position is simple and predictable.
 
-## 14. Summary
+## 16. Summary
 
 This specification defines a focused, well-architected bookkeeping system that:
 

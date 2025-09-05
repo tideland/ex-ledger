@@ -31,7 +31,7 @@ The Tideland Ledger is a web-based simplified ledger-style bookkeeping system im
   - Full-text search capability across accounts
   - Filtering by hierarchy level
 - No SKR03/SKR04 or similar chart of accounts standards
-- Transaction entry and posting
+- Transaction entry and posting (internally called "Entry" with "Positions")
 - Transaction templates for recurring entries (maintainable online)
 - Templates must validate against existing accounts
 - Template positions use fractions of total sum as standard
@@ -42,7 +42,7 @@ The Tideland Ledger is a web-based simplified ledger-style bookkeeping system im
 
 - Trial balance generation
 - Account balance queries (debit/credit totals)
-- Transaction history views
+- Transaction history views (based on Entry/Position model)
 - Flexible reporting based on account numbering schemes
 - Future: Additional reports and dashboards
 - Export capabilities (format to be defined)

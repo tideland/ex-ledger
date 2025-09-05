@@ -57,6 +57,26 @@ session_timeout = 3600  # seconds (1 hour)
 database = "./priv/ledger.db"  # Path to SQLite database
 
 [auth]
+# Password requirements
+password_min_length = 12
+password_require_uppercase = true
+password_require_lowercase = true
+password_require_numbers = true
+password_require_special = false
+
+# Session configuration
+session_timeout_minutes = 30
+session_sliding_expiration = true
+session_single_per_user = false
+
+# Security settings
+max_failed_attempts = 5
+lockout_duration_minutes = 15
+force_password_change_on_first_login = true
+
+# Hashing algorithm: "argon2" or "bcrypt"
+password_algorithm = "argon2"
+
 # Initial admin account (only used on first run)
 admin_password = ""  # If empty, generates random password
 

@@ -151,26 +151,66 @@ defmodule Ledger.Config do
   end
 
   # Authentication configuration
-  # These settings control Tideland Auth integration
+  # These settings control the built-in authentication system
 
   @doc """
-  Returns the Tideland Auth service URL.
+  Returns the password minimum length.
 
-  Default: "http://localhost:4001"
+  Default: 12 characters
   """
-  @spec auth_service_url() :: String.t()
-  def auth_service_url do
-    get_config([:auth, :service_url], "http://localhost:4001")
+  @spec password_min_length() :: pos_integer()
+  def password_min_length do
+    get_config([:auth, :password_min_length], 12)
   end
 
   @doc """
-  Returns the authentication token lifetime in seconds.
+  Returns the session timeout in minutes.
 
-  Default: 3600 (1 hour)
+  Default: 30 minutes
   """
-  @spec auth_token_lifetime() :: pos_integer()
-  def auth_token_lifetime do
-    get_config([:auth, :token_lifetime], 3600)
+  @spec session_timeout_minutes() :: pos_integer()
+  def session_timeout_minutes do
+    get_config([:auth, :session_timeout_minutes], 30)
+  end
+
+  @doc """
+  Returns the maximum failed login attempts before lockout.
+
+  Default: 5 attempts
+  """
+  @spec max_failed_attempts() :: pos_integer()
+  def max_failed_attempts do
+    get_config([:auth, :max_failed_attempts], 5)
+  end
+
+  @doc """
+  Returns the account lockout duration in minutes.
+
+  Default: 15 minutes
+  """
+  @spec lockout_duration_minutes() :: pos_integer()
+  def lockout_duration_minutes do
+    get_config([:auth, :lockout_duration_minutes], 15)
+  end
+
+  @doc """
+  Returns the password hashing algorithm.
+
+  Default: "argon2"
+  """
+  @spec password_algorithm() :: String.t()
+  def password_algorithm do
+    get_config([:auth, :password_algorithm], "argon2")
+  end
+
+  @doc """
+  Returns whether sliding session expiration is enabled.
+
+  Default: true
+  """
+  @spec session_sliding_expiration?() :: boolean()
+  def session_sliding_expiration? do
+    get_config([:auth, :session_sliding_expiration], true)
   end
 
   # Import/Export configuration

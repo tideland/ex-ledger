@@ -60,6 +60,7 @@ For detailed implementation guidance, refer to these companion documents:
 - `glossary.md`: Canonical terminology with English/German translations
 - `impexp-design.md`: Import/export specifications and data formats
 - `review-comments.md`: External review feedback and responses
+- `auth-design.md`: Authentication system design with future extraction plan
 
 ## 3. Core System Requirements
 
@@ -121,19 +122,20 @@ For detailed implementation guidance, refer to these companion documents:
 
 ## 4. Authentication and Authorization Requirements
 
-### REQ-02-01: Authentication Service
+### REQ-02-01: Authentication System
 
-**Requirement**: Use external Tideland Auth service for authentication.
+**Requirement**: Built-in authentication system with future extraction capability.
 
 **Constraints**:
 
-- Cannot implement own authentication
-- Must integrate with existing auth service
-- Need to map external users to local roles
+- Implement authentication within the application initially
+- Design for easy extraction to future Tideland Auth service
+- Support standard authentication features (login, logout, sessions)
+- Secure password handling with bcrypt/argon2
 
-**Solution**: OAuth2/JWT integration with Tideland Auth
+**Solution**: Built-in authentication with pluggable architecture
 
-**Rationale**: Separating authentication from the application follows security best practices and allows centralized user management across multiple Tideland applications.
+**Rationale**: Starting with built-in authentication allows immediate functionality while designing interfaces that support future extraction to a centralized Tideland Auth service. This approach provides a clear migration path.
 
 ### REQ-02-02: Authorization Roles
 
@@ -142,12 +144,13 @@ For detailed implementation guidance, refer to these companion documents:
 **Constraints**:
 
 - Roles must be hardcoded, not configurable
-- Hardcoded "admin" superuser account
+- Initial "admin" user created on first startup
 - Role-based permissions for all operations
+- Admin can manage other users within the system
 
 **Solution**: Hardcoded role definitions with permission matrices
 
-**Rationale**: Fixed roles simplify the authorization model and ensure consistent permissions across deployments. The hardcoded admin account ensures system recovery options.
+**Rationale**: Fixed roles simplify the authorization model and ensure consistent permissions across deployments. The initial admin account ensures system bootstrap capability.
 
 ### REQ-02-03: Multi-tenancy
 
@@ -387,19 +390,20 @@ For detailed implementation guidance, refer to these companion documents:
 
 ## 9. Security and Authorization Requirements
 
-### REQ-07-01: Authentication Integration
+### REQ-07-01: Authentication Security
 
-**Requirement**: Follow Phoenix conventions with clear separation of concerns.
+**Requirement**: Secure authentication implementation following best practices.
 
 **Constraints**:
 
-- Business logic separate from web layer
-- Contexts for domain boundaries
-- OTP supervision trees
+- Passwords hashed with bcrypt or argon2
+- Session management with secure tokens
+- CSRF protection for all state-changing operations
+- Secure cookie configuration
 
-**Solution**: Standard Phoenix structure with contexts
+**Solution**: Phoenix built-in security features with proper configuration
 
-**Rationale**: Following conventions makes the codebase maintainable and familiar to other Elixir developers.
+**Rationale**: Security is critical for financial applications. Using Phoenix's built-in security features ensures battle-tested implementations.
 
 ### REQ-07-02: Role-Based Access Control
 
@@ -687,5 +691,6 @@ This specification defines a focused, well-architected bookkeeping system that:
 3. **Respects accounting principles** - Simplified ledger style, flexible account structures
 4. **Serves German users** - German UI, tax tracking, standard reports
 5. **Enables learning** - Clean code, good documentation, standard patterns
+6. **Future-proof architecture** - Built-in auth designed for extraction to SSO service
 
-The design decisions prioritize simplicity, correctness, and maintainability over features that would complicate the system without adding essential value.
+The design decisions prioritize simplicity, correctness, and maintainability over features that would complicate the system without adding essential value. The authentication design allows for future migration to a centralized service.

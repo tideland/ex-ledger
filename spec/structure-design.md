@@ -7,6 +7,7 @@ This document describes the typical structure of an Elixir/Phoenix application a
 ## 2. Application Structure Philosophy
 
 ### 2.1 Core Principles
+
 - **Separation of Concerns**: Business logic separate from web layer
 - **Explicit over Implicit**: Clear module naming and organization
 - **Bounded Contexts**: Domain-driven design with clear boundaries
@@ -14,7 +15,9 @@ This document describes the typical structure of an Elixir/Phoenix application a
 - **Convention over Configuration**: Follow Phoenix/Elixir standards
 
 ### 2.2 Why This Structure?
+
 Elixir applications follow OTP (Open Telecom Platform) principles, which provide:
+
 - Fault tolerance through supervision
 - Hot code reloading capabilities
 - Process isolation for concurrent operations
@@ -23,10 +26,11 @@ Elixir applications follow OTP (Open Telecom Platform) principles, which provide
 ## 3. Directory Structure
 
 ### 3.1 Root Level Structure
+
 ```
 ledger/
 ├── _build/              # Compiled files (git ignored)
-├── assets/              # Frontend assets (if using Node.js)
+
 ├── config/              # Configuration files
 ├── deps/                # Dependencies (git ignored)
 ├── doc/                 # Documentation
@@ -41,34 +45,40 @@ ledger/
 
 ### 3.2 Why Each Directory?
 
-**_build/**
+**\_build/**
+
 - Contains compiled BEAM files
 - Separated by environment (dev, test, prod)
 - Never committed to version control
 - Regenerated on each build
 
 **config/**
+
 - Centralized configuration management
 - Environment-specific settings
 - Compile-time and runtime configuration
 - Follows Elixir's Config module patterns
 
 **deps/**
+
 - Downloaded dependencies
 - Managed by Mix
 - Lock file ensures reproducible builds
 
 **lib/**
+
 - Core application code
 - Split between business logic and web layer
 - The heart of your application
 
 **priv/**
+
 - Non-Elixir files needed at runtime
 - Database migrations, static assets, etc.
 - Accessible via Application.app_dir(:ledger, "priv")
 
 **test/**
+
 - Mirrors lib/ structure
 - Unit and integration tests
 - Test helpers and fixtures
@@ -76,6 +86,7 @@ ledger/
 ## 4. The lib/ Directory Structure
 
 ### 4.1 Detailed Layout
+
 ```
 lib/
 ├── ledger/                    # Business logic (contexts)
@@ -108,12 +119,14 @@ lib/
 ### 4.2 Why This Organization?
 
 **Separation of Business Logic and Web Layer**
+
 - `ledger/` contains pure business logic
 - `ledger_web/` contains only web-related code
 - Allows testing business logic without web layer
 - Could support multiple interfaces (API, CLI)
 
 **Context-Based Organization**
+
 - Each context (Accounts, Transactions, Users) is self-contained
 - Clear boundaries between different domains
 - Easier to understand and maintain
@@ -122,6 +135,7 @@ lib/
 ## 5. OTP Application Structure
 
 ### 5.1 Application Module
+
 ```elixir
 defmodule Ledger.Application do
   use Application
@@ -145,12 +159,14 @@ end
 ```
 
 ### 5.2 Why Supervision Trees?
+
 - **Fault Tolerance**: If a process crashes, it's restarted
 - **Isolation**: Errors don't propagate to other parts
 - **Monitoring**: Built-in process monitoring
 - **Hot Upgrades**: Can update code without stopping
 
 ### 5.3 Supervision Strategies
+
 - **one_for_one**: Restart only the failed child
 - **one_for_all**: Restart all children if one fails
 - **rest_for_one**: Restart failed child and those started after it
@@ -158,6 +174,7 @@ end
 ## 6. Context Design
 
 ### 6.1 Context Structure
+
 ```
 accounts/
 ├── accounts.ex      # Public API
@@ -168,6 +185,7 @@ accounts/
 ```
 
 ### 6.2 Context Module Pattern
+
 ```elixir
 defmodule Ledger.Accounts do
   @moduledoc """
@@ -187,6 +205,7 @@ end
 ```
 
 ### 6.3 Why Contexts?
+
 - **Encapsulation**: Hide internal implementation
 - **Clear API**: Well-defined public functions
 - **Testability**: Test through the public API
@@ -195,6 +214,7 @@ end
 ## 7. Schema and Changeset Pattern
 
 ### 7.1 Schema Structure
+
 ```elixir
 defmodule Ledger.Accounts.Account do
   use Ecto.Schema
@@ -219,6 +239,7 @@ end
 ```
 
 ### 7.2 Why Schemas and Changesets?
+
 - **Data Validation**: Centralized validation logic
 - **Type Safety**: Compile-time type checking
 - **Database Mapping**: Clear ORM mapping
@@ -227,6 +248,7 @@ end
 ## 8. Web Layer Structure
 
 ### 8.1 Controller Pattern
+
 ```elixir
 defmodule LedgerWeb.AccountController do
   use LedgerWeb, :controller
@@ -240,6 +262,7 @@ end
 ```
 
 ### 8.2 LiveView Pattern
+
 ```elixir
 defmodule LedgerWeb.TransactionLive.New do
   use LedgerWeb, :live_view
@@ -256,6 +279,7 @@ end
 ```
 
 ### 8.3 Why This Web Structure?
+
 - **Thin Controllers**: Business logic stays in contexts
 - **Composable Views**: Reusable components
 - **LiveView for Interactivity**: Real-time updates without JavaScript
@@ -264,6 +288,7 @@ end
 ## 9. Configuration Structure
 
 ### 9.1 Configuration Files
+
 ```
 config/
 ├── config.exs          # Shared configuration
@@ -274,6 +299,7 @@ config/
 ```
 
 ### 9.2 Why Multiple Config Files?
+
 - **Environment Separation**: Different settings per environment
 - **Compile vs Runtime**: Some config needed at compile time
 - **Security**: Sensitive data only in runtime config
@@ -282,6 +308,7 @@ config/
 ## 10. Testing Structure
 
 ### 10.1 Test Organization
+
 ```
 test/
 ├── support/
@@ -298,6 +325,7 @@ test/
 ```
 
 ### 10.2 Why This Test Structure?
+
 - **Mirrors Source**: Easy to find corresponding tests
 - **Shared Helpers**: Common test functionality
 - **Isolation**: Tests run in isolation
@@ -306,6 +334,7 @@ test/
 ## 11. Database Structure
 
 ### 11.1 Migration Organization
+
 ```
 priv/repo/migrations/
 ├── 20240101000001_create_users.exs
@@ -315,6 +344,7 @@ priv/repo/migrations/
 ```
 
 ### 11.2 Why Migrations?
+
 - **Version Control**: Database schema in git
 - **Reproducibility**: Same schema everywhere
 - **Rollback Capability**: Can undo changes
@@ -323,6 +353,7 @@ priv/repo/migrations/
 ## 12. Process and GenServer Structure
 
 ### 12.1 GenServer Pattern
+
 ```elixir
 defmodule Ledger.TransactionProcessor do
   use GenServer
@@ -347,6 +378,7 @@ end
 ```
 
 ### 12.2 Why GenServers?
+
 - **State Management**: Maintain state across requests
 - **Concurrency**: Handle multiple requests
 - **Fault Tolerance**: Supervised and restarted on failure
@@ -355,6 +387,7 @@ end
 ## 13. Asset Pipeline (Without Node.js)
 
 ### 13.1 Pure Elixir Assets
+
 ```
 priv/
 ├── static/
@@ -367,6 +400,7 @@ priv/
 ```
 
 ### 13.2 Why Avoid Node.js?
+
 - **Simplicity**: One less technology stack
 - **Deployment**: Easier deployment without Node
 - **Phoenix Tools**: Use Phoenix's built-in tools
@@ -375,21 +409,25 @@ priv/
 ## 14. Common Patterns
 
 ### 14.1 Repository Pattern
+
 - All database access through Repo
 - Contexts wrap Repo calls
 - Never call Repo directly from web layer
 
 ### 14.2 Changeset Pattern
+
 - All data validation in changesets
 - Composable validation functions
 - Clear error messages
 
 ### 14.3 Context Pattern
+
 - Public API in context module
 - Internal modules hidden
 - Clear boundaries between domains
 
 ### 14.4 Supervisor Pattern
+
 - Everything supervised
 - Crash and restart philosophy
 - Isolated failure domains
@@ -397,23 +435,27 @@ priv/
 ## 15. Best Practices
 
 ### 15.1 Module Naming
+
 - Use full names: `Ledger.Accounts.Account`
 - Avoid abbreviations
 - Consistent naming patterns
 
 ### 15.2 Function Organization
+
 1. Public API functions first
 2. Private functions below
 3. Callbacks at the end
 4. Group related functions
 
 ### 15.3 Documentation
+
 - Document all public functions
 - Use @moduledoc for module purpose
 - Examples in documentation
 - Type specifications for clarity
 
 ### 15.4 Error Handling
+
 - Let it crash philosophy
 - Return {:ok, result} or {:error, reason}
 - Use ! functions for exceptional cases

@@ -48,16 +48,16 @@ RELATION relation_name {
 ### 1.3 Data Model Definition
 
 ```dsl
-// User management (delegated to auth service, but we keep reference)
+// User management (built-in authentication)
 TABLE users {
   FIELD id : ID
-  FIELD external_id : UUID [NOT NULL, UNIQUE]  // ID from auth service
   FIELD username : STRING(50) [NOT NULL, UNIQUE]
   FIELD role : ENUM[admin, bookkeeper, viewer] [NOT NULL, DEFAULT viewer]
+  FIELD active : BOOLEAN [NOT NULL, DEFAULT true]
+  FIELD last_login_at : DATETIME [NULL]
   FIELD created_at : TIMESTAMP [NOT NULL, DEFAULT NOW]
   FIELD updated_at : TIMESTAMP [NOT NULL, DEFAULT NOW]
 
-  INDEX idx_users_external_id ON (external_id)
   INDEX idx_users_username ON (username)
 }
 
@@ -80,8 +80,8 @@ TABLE accounts {
   INDEX idx_accounts_parent ON (parent_id)
 }
 
-// Entries (Transactions)
-TABLE entries {
+// Transactions
+TABLE transactions {
   FIELD id : ID
   FIELD date : DATE [NOT NULL]
   FIELD description : STRING(500) [NOT NULL]
@@ -96,19 +96,19 @@ TABLE entries {
   FIELD posted_by : INTEGER [NULL]
   FIELD voided_by : INTEGER [NULL]
 
-  CONSTRAINT fk_entries_created_by FOREIGN KEY (created_by) REFERENCES users(id)
-  CONSTRAINT fk_entries_posted_by FOREIGN KEY (posted_by) REFERENCES users(id)
-  CONSTRAINT fk_entries_voided_by FOREIGN KEY (voided_by) REFERENCES users(id)
+  CONSTRAINT fk_transactions_created_by FOREIGN KEY (created_by) REFERENCES users(id)
+  CONSTRAINT fk_transactions_posted_by FOREIGN KEY (posted_by) REFERENCES users(id)
+  CONSTRAINT fk_transactions_voided_by FOREIGN KEY (voided_by) REFERENCES users(id)
 
-  INDEX idx_entries_date ON (date)
-  INDEX idx_entries_status ON (status)
-  INDEX idx_entries_reference ON (reference)
+  INDEX idx_transactions_date ON (date)
+  INDEX idx_transactions_status ON (status)
+  INDEX idx_transactions_reference ON (reference)
 }
 
-// Positions (Line items within entries)
+// Positions (Line items within transactions)
 TABLE positions {
   FIELD id : ID
-  FIELD entry_id : INTEGER [NOT NULL]
+  FIELD transaction_id : INTEGER [NOT NULL]
   FIELD account_id : INTEGER [NOT NULL]
   FIELD description : STRING(200) [NULL]
   FIELD amount : DECIMAL(15,2) [NOT NULL]  // Positive = Debit, Negative = Credit
@@ -117,20 +117,20 @@ TABLE positions {
   FIELD created_at : TIMESTAMP [NOT NULL, DEFAULT NOW]
   FIELD updated_at : TIMESTAMP [NOT NULL, DEFAULT NOW]
 
-  CONSTRAINT fk_positions_entry FOREIGN KEY (entry_id) REFERENCES entries(id)
+  CONSTRAINT fk_positions_transaction FOREIGN KEY (transaction_id) REFERENCES transactions(id)
   CONSTRAINT fk_positions_account FOREIGN KEY (account_id) REFERENCES accounts(id)
   CONSTRAINT chk_positions_amount CHECK (amount != 0)
 
-  INDEX idx_positions_entry ON (entry_id)
+  INDEX idx_positions_transaction ON (transaction_id)
   INDEX idx_positions_account ON (account_id)
   INDEX idx_positions_tax_relevant ON (tax_relevant)
 }
 
-// Transaction Templates
+// Transaction Templates (versioned and immutable)
 TABLE templates {
   FIELD id : ID
-  FIELD code : STRING(20) [NOT NULL, UNIQUE]
   FIELD name : STRING(100) [NOT NULL]
+  FIELD version : INTEGER [NOT NULL, DEFAULT 1]
   FIELD description : TEXT [NULL]
   FIELD default_total : DECIMAL(15,2) [NULL]
   FIELD active : BOOLEAN [NOT NULL, DEFAULT true]
@@ -139,9 +139,11 @@ TABLE templates {
   FIELD created_by : INTEGER [NOT NULL]
 
   CONSTRAINT fk_templates_created_by FOREIGN KEY (created_by) REFERENCES users(id)
+  CONSTRAINT uk_templates_name_version UNIQUE (name, version)
 
-  INDEX idx_templates_code ON (code)
+  INDEX idx_templates_name ON (name)
   INDEX idx_templates_active ON (active)
+  INDEX idx_templates_name_version ON (name, version)
 }
 
 // Template Lines
@@ -296,14 +298,14 @@ PRAGMA foreign_keys = ON;
 -- Users table
 CREATE TABLE users (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    external_id TEXT NOT NULL UNIQUE,
     username TEXT NOT NULL UNIQUE,
     role TEXT NOT NULL DEFAULT 'viewer' CHECK (role IN ('admin', 'bookkeeper', 'viewer')),
+    active INTEGER NOT NULL DEFAULT 1,
+    last_login_at DATETIME,
     created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE INDEX idx_users_external_id ON users(external_id);
 CREATE INDEX idx_users_username ON users(username);
 
 -- Accounts table
@@ -324,8 +326,8 @@ CREATE TABLE accounts (
 CREATE INDEX idx_accounts_code ON accounts(code);
 CREATE INDEX idx_accounts_parent ON accounts(parent_id);
 
--- Entries table
-CREATE TABLE entries (
+-- Transactions table
+CREATE TABLE transactions (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     date DATE NOT NULL,
     description TEXT NOT NULL,
@@ -344,14 +346,14 @@ CREATE TABLE entries (
     FOREIGN KEY (voided_by) REFERENCES users(id) ON DELETE RESTRICT
 );
 
-CREATE INDEX idx_entries_date ON entries(date);
-CREATE INDEX idx_entries_status ON entries(status);
-CREATE INDEX idx_entries_reference ON entries(reference);
+CREATE INDEX idx_transactions_date ON transactions(date);
+CREATE INDEX idx_transactions_status ON transactions(status);
+CREATE INDEX idx_transactions_reference ON transactions(reference);
 
 -- Positions table
 CREATE TABLE positions (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    entry_id INTEGER NOT NULL,
+    transaction_id INTEGER NOT NULL,
     account_id INTEGER NOT NULL,
     description TEXT,
     amount DECIMAL(15,2) NOT NULL,
@@ -359,15 +361,15 @@ CREATE TABLE positions (
     position INTEGER NOT NULL,
     created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (entry_id) REFERENCES entries(id) ON DELETE CASCADE,
+    FOREIGN KEY (transaction_id) REFERENCES transactions(id) ON DELETE CASCADE,
     FOREIGN KEY (account_id) REFERENCES accounts(id) ON DELETE RESTRICT,
     CHECK (amount != 0)
 );
 
-CREATE INDEX idx_positions_entry ON positions(entry_id);
+CREATE INDEX idx_positions_transaction ON positions(transaction_id);
 CREATE INDEX idx_positions_account ON positions(account_id);
 CREATE INDEX idx_positions_tax_relevant ON positions(tax_relevant);
-CREATE INDEX idx_positions_order ON positions(entry_id, position);
+CREATE INDEX idx_positions_order ON positions(transaction_id, position);
 
 -- Audit log table
 CREATE TABLE audit_log (
@@ -734,9 +736,10 @@ defmodule Ledger.Accounts.User do
   import Ecto.Changeset
 
   schema "users" do
-    field :external_id, Ecto.UUID
     field :username, :string
     field :role, Ecto.Enum, values: [:admin, :bookkeeper, :viewer], default: :viewer
+    field :active, :boolean, default: true
+    field :last_login_at, :utc_datetime
 
     timestamps()
   end
@@ -744,9 +747,8 @@ defmodule Ledger.Accounts.User do
   @doc false
   def changeset(user, attrs) do
     user
-    |> cast(attrs, [:external_id, :username, :role])
-    |> validate_required([:external_id, :username, :role])
-    |> unique_constraint(:external_id)
+    |> cast(attrs, [:username, :role, :active])
+    |> validate_required([:username, :role])
     |> unique_constraint(:username)
   end
 end
@@ -1028,9 +1030,7 @@ defmodule Ledger.Accounts do
 
   def get_user!(id), do: Repo.get!(User, id)
 
-  def get_user_by_external_id(external_id) do
-    Repo.get_by(User, external_id: external_id)
-  end
+
 
   def create_user(attrs \\ %{}) do
     %User{}
@@ -1343,14 +1343,14 @@ defmodule Ledger.Repo.Migrations.CreateUsers do
 
   def change do
     create table(:users) do
-      add :external_id, :uuid, null: false
       add :username, :string, null: false
       add :role, :string, null: false, default: "viewer"
+      add :active, :boolean, null: false, default: true
+      add :last_login_at, :utc_datetime
 
       timestamps()
     end
 
-    create unique_index(:users, [:external_id])
     create unique_index(:users, [:username])
   end
 end

@@ -2,14 +2,14 @@
 
 ## Overview
 
-This document describes the authentication and authorization system for Tideland Ledger. The system is designed with a dual purpose: providing immediate, fully-functional authentication while maintaining a clean architecture that allows future extraction to a centralized Tideland Auth service.
+This document describes the authentication and authorization system for Tideland Ledger. The system provides a complete, self-contained authentication solution within the application.
 
 ## Design Principles
 
-1. **Extraction-Ready**: All authentication logic is isolated in dedicated modules
-2. **Interface-First**: Define clear contracts between auth and business logic
-3. **Security-First**: Follow OWASP guidelines and Elixir/Phoenix best practices
-4. **Simple Migration**: Moving to external auth should require minimal changes
+1. **Self-Contained**: All authentication logic is contained within the application
+2. **Security-First**: Follow OWASP guidelines and Elixir/Phoenix best practices
+3. **Simple Architecture**: Clean, maintainable authentication without external dependencies
+4. **Role-Based Access**: Three fixed roles with clear permission boundaries
 
 ## Architecture
 
@@ -115,18 +115,18 @@ Allow or redirect to unauthorized
 
 ### Permission Matrix
 
-| Action | Admin | Bookkeeper | Viewer |
-|--------|-------|------------|---------|
-| View accounts | ✓ | ✓ | ✓ |
-| Create accounts | ✓ | ✗ | ✗ |
-| View transactions | ✓ | ✓ | ✓ |
-| Create transactions | ✓ | ✓ | ✗ |
-| Post transactions | ✓ | ✓ | ✗ |
-| Void transactions | ✓ | ✓ | ✗ |
-| View reports | ✓ | ✓ | ✓ |
-| Manage users | ✓ | ✗ | ✗ |
-| Close periods | ✓ | ✗ | ✗ |
-| System configuration | ✓ | ✗ | ✗ |
+| Action               | Admin | Bookkeeper | Viewer |
+| -------------------- | ----- | ---------- | ------ |
+| View accounts        | ✓     | ✓          | ✓      |
+| Create accounts      | ✓     | ✗          | ✗      |
+| View transactions    | ✓     | ✓          | ✓      |
+| Create transactions  | ✓     | ✓          | ✗      |
+| Post transactions    | ✓     | ✓          | ✗      |
+| Void transactions    | ✓     | ✓          | ✗      |
+| View reports         | ✓     | ✓          | ✓      |
+| Manage users         | ✓     | ✗          | ✗      |
+| Close periods        | ✓     | ✗          | ✗      |
+| System configuration | ✓     | ✗          | ✗      |
 
 ## Security Measures
 
@@ -152,44 +152,36 @@ Allow or redirect to unauthorized
 - Audit log for security events
 - Force password change on first login
 
-## Migration Strategy
+## Implementation Strategy
 
-### Phase 1: Current Implementation (Built-in Auth)
-
-```elixir
-defmodule Ledger.Auth do
-  def authenticate_user(username, password) do
-    # Direct database authentication
-  end
-
-  def create_session(user) do
-    # Local session management
-  end
-end
-```
-
-### Phase 2: Future External Auth
+### Built-in Authentication
 
 ```elixir
 defmodule Ledger.Auth do
   def authenticate_user(username, password) do
-    # Delegate to Tideland Auth API
-    TidelandAuth.authenticate(username, password)
+    # Direct database authentication with secure password verification
+    case get_user_by_username(username) do
+      nil -> {:error, :invalid_credentials}
+      user -> verify_password(password, user.password_hash)
+    end
   end
 
   def create_session(user) do
-    # Use JWT from Tideland Auth
-    TidelandAuth.create_token(user)
+    # Secure session token generation and storage
+    token = generate_secure_token()
+    create_session_record(user, token)
+    {:ok, token}
+  end
+
+  def verify_session(token) do
+    # Session validation and user loading
+    case get_session_by_token(token) do
+      nil -> {:error, :invalid_session}
+      session -> {:ok, load_user(session.user_id)}
+    end
   end
 end
 ```
-
-### Migration Path
-
-1. **Minimal Interface Changes**: Business logic calls `Auth.authenticate_user/2` regardless of implementation
-2. **User Sync**: Built-in users can be exported to Tideland Auth
-3. **Session Compatibility**: Design sessions to work with JWT tokens
-4. **Role Mapping**: Same role names in both systems
 
 ## Initial Setup
 
@@ -323,21 +315,14 @@ password_algorithm = "argon2"
 
 ## Future Considerations
 
-### OAuth2/OIDC Support
+### Enhanced Security Features
 
-When migrating to Tideland Auth, consider:
+Additional security features that could be added:
 
-- OAuth2 authorization code flow
-- OpenID Connect for user info
-- JWT token validation
-- Token refresh mechanism
-
-### Single Sign-On (SSO)
-
-- Shared session store (Redis)
-- Cross-domain authentication
-- Service-to-service authentication
-- API key management
+- Two-factor authentication (TOTP)
+- API key management for programmatic access
+- Enhanced session management with Redis
+- Advanced audit logging and alerting
 
 ### Audit Requirements
 
@@ -366,4 +351,4 @@ All authentication events should be logged:
 - [ ] Session cleanup job
 - [ ] Tests for all components
 - [ ] Security documentation
-- [ ] Migration guide for Tideland Auth
+- [ ] Production deployment guide

@@ -124,18 +124,18 @@ For detailed implementation guidance, refer to these companion documents:
 
 ### REQ-02-01: Authentication System
 
-**Requirement**: Built-in authentication system with future extraction capability.
+**Requirement**: Built-in authentication system for the ledger application.
 
 **Constraints**:
 
-- Implement authentication within the application initially
-- Design for easy extraction to future Tideland Auth service
+- Implement authentication within the application
 - Support standard authentication features (login, logout, sessions)
 - Secure password handling with bcrypt/argon2
+- Three hardcoded roles: Admin, Bookkeeper, Viewer
 
-**Solution**: Built-in authentication with pluggable architecture
+**Solution**: Built-in authentication with secure session management
 
-**Rationale**: Starting with built-in authentication allows immediate functionality while designing interfaces that support future extraction to a centralized Tideland Auth service. This approach provides a clear migration path.
+**Rationale**: Self-contained authentication eliminates external dependencies and simplifies deployment while providing all necessary security features for a bookkeeping application.
 
 ### REQ-02-02: Authorization Roles
 
@@ -152,7 +152,7 @@ For detailed implementation guidance, refer to these companion documents:
 
 **Rationale**: Fixed roles simplify the authorization model and ensure consistent permissions across deployments. The initial admin account ensures system bootstrap capability.
 
-### REQ-02-03: Multi-tenancy
+### REQ-02-03: Single-Tenant Architecture
 
 **Requirement**: Single-tenant system with one set of books shared by all users.
 

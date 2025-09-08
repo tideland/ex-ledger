@@ -1,4 +1,4 @@
-defmodule Ledger.Accounts.Account do
+defmodule TidelandLedger.Accounts.Account do
   @moduledoc """
   Represents an account in the hierarchical chart of accounts.
 
@@ -16,9 +16,9 @@ defmodule Ledger.Accounts.Account do
   import Ecto.Changeset
   import Ecto.Query
 
-  alias Ledger.AccountPath
-  alias Ledger.Accounts.Account
-  alias Ledger.Config
+  alias TidelandLedger.AccountPath
+  alias TidelandLedger.Accounts.Account
+  alias TidelandLedger.Config
 
   @type t :: %__MODULE__{
           id: integer() | nil,
@@ -183,7 +183,7 @@ defmodule Ledger.Accounts.Account do
 
   defp validate_no_recent_transactions(changeset) do
     account = changeset.data
-    days_to_check = Config.recent_transaction_days()
+    days_to_check = TidelandLedger.Config.recent_transaction_days()
 
     if account.id && has_recent_transactions?(account, days_to_check) do
       add_error(
@@ -278,7 +278,7 @@ defmodule Ledger.Accounts.Account do
         select: count(a.id)
       )
 
-    case Ledger.Repo.one(query) do
+    case TidelandLedger.Repo.one(query) do
       0 -> false
       _ -> true
     end

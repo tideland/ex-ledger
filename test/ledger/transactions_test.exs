@@ -1,11 +1,11 @@
-defmodule Ledger.TransactionsTest do
-  use Ledger.DataCase, async: true
+defmodule TidelandLedger.TransactionsTest do
+  use TidelandLedger.DataCase, async: true
 
-  alias Ledger.Transactions
-  alias Ledger.Transactions.{Entry, Position}
-  alias Ledger.Accounts
-  alias Ledger.Accounts.Account
-  alias Ledger.Amount
+  alias TidelandLedger.Transactions
+  alias TidelandLedger.Transactions.{Entry, Position}
+  alias TidelandLedger.Accounts
+  alias TidelandLedger.Accounts.Account
+  alias TidelandLedger.Amount
 
   # Setup helpers
   # These create test data for our tests

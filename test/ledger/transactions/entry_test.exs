@@ -1,9 +1,9 @@
-defmodule Ledger.Transactions.EntryTest do
-  use Ledger.DataCase, async: true
+defmodule TidelandLedger.Transactions.EntryTest do
+  use TidelandLedger.DataCase, async: true
 
-  alias Ledger.Transactions.{Entry, Position}
-  alias Ledger.Accounts.Account
-  alias Ledger.Amount
+  alias TidelandLedger.Transactions.{Entry, Position}
+  alias TidelandLedger.Accounts.Account
+  alias TidelandLedger.Amount
 
   # Test data setup helpers
   def valid_position_attrs(overrides \\ %{}) do

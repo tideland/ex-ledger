@@ -1,4 +1,4 @@
-defmodule Ledger.Auth.User do
+defmodule TidelandLedger.Auth.User do
   @moduledoc """
   User schema for authentication and authorization.
 
@@ -13,8 +13,9 @@ defmodule Ledger.Auth.User do
 
   use Ecto.Schema
   import Ecto.Changeset
+  import Ecto.Query
 
-  alias Ledger.Auth.{User, Credential}
+  alias TidelandLedger.Auth.{User, Credential}
 
   @type role :: :admin | :bookkeeper | :viewer
   @type t :: %__MODULE__{
@@ -167,7 +168,7 @@ defmodule Ledger.Auth.User do
 
   defp validate_password(changeset) do
     changeset
-    |> validate_length(:password, min: Ledger.Config.password_min_length())
+    |> validate_length(:password, min: TidelandLedger.Config.password_min_length())
     |> validate_password_requirements()
   end
 
@@ -178,25 +179,25 @@ defmodule Ledger.Auth.User do
       changeset
       |> validate_password_requirement(
         password,
-        Ledger.Config.password_require_uppercase?(),
+        TidelandLedger.Config.password_require_uppercase?(),
         ~r/[A-Z]/,
         "must contain at least one uppercase letter"
       )
       |> validate_password_requirement(
         password,
-        Ledger.Config.password_require_lowercase?(),
+        TidelandLedger.Config.password_require_lowercase?(),
         ~r/[a-z]/,
         "must contain at least one lowercase letter"
       )
       |> validate_password_requirement(
         password,
-        Ledger.Config.password_require_numbers?(),
+        TidelandLedger.Config.password_require_numbers?(),
         ~r/[0-9]/,
         "must contain at least one number"
       )
       |> validate_password_requirement(
         password,
-        Ledger.Config.password_require_special?(),
+        TidelandLedger.Config.password_require_special?(),
         ~r/[^A-Za-z0-9]/,
         "must contain at least one special character"
       )

@@ -1,4 +1,4 @@
-defmodule Ledger.AccountPath do
+defmodule TidelandLedger.AccountPath do
   @moduledoc """
   Handles hierarchical account paths with automatic normalization and validation.
 
@@ -13,7 +13,7 @@ defmodule Ledger.AccountPath do
 
   @type t :: String.t()
 
-  alias Ledger.Config
+  alias TidelandLedger.Config
 
   # The standard separator used in normalized paths
   # This ensures consistent formatting throughout the system

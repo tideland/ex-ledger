@@ -1,9 +1,9 @@
-defmodule Ledger.MixProject do
+defmodule TidelandLedger.MixProject do
   use Mix.Project
 
   def project do
     [
-      app: :ledger,
+      app: :tideland_ledger,
       version: "0.1.0",
       elixir: "~> 1.15",
       elixirc_paths: elixirc_paths(Mix.env()),
@@ -23,26 +23,26 @@ defmodule Ledger.MixProject do
         extras: ["README.md", "LICENSE"],
         groups_for_modules: [
           "Core Types": [
-            Ledger.Amount,
-            Ledger.AccountPath
+            TidelandLedger.Amount,
+            TidelandLedger.AccountPath
           ],
           Accounts: [
-            Ledger.Accounts,
-            Ledger.Accounts.Account
+            TidelandLedger.Accounts,
+            TidelandLedger.Accounts.Account
           ],
           Transactions: [
-            Ledger.Transactions,
-            Ledger.Transactions.Entry,
-            Ledger.Transactions.Position
+            TidelandLedger.Transactions,
+            TidelandLedger.Transactions.Entry,
+            TidelandLedger.Transactions.Position
           ],
           Users: [
-            Ledger.Users,
-            Ledger.Users.User
+            TidelandLedger.Users,
+            TidelandLedger.Users.User
           ],
           Templates: [
-            Ledger.Templates,
-            Ledger.Templates.Template,
-            Ledger.Templates.TemplatePosition
+            TidelandLedger.Templates,
+            TidelandLedger.Templates.Template,
+            TidelandLedger.Templates.TemplatePosition
           ]
         ]
       ],
@@ -61,7 +61,7 @@ defmodule Ledger.MixProject do
   # Run "mix help compile.app" to learn about applications.
   def application do
     [
-      mod: {Ledger.Application, []},
+      mod: {TidelandLedger.Application, []},
       extra_applications: [:logger, :runtime_tools]
     ]
   end
@@ -96,7 +96,6 @@ defmodule Ledger.MixProject do
 
       # Development and testing
       {:floki, ">= 0.35.0", only: :test},
-      {:phoenix_ecto, "~> 4.4"},
       {:ex_machina, "~> 2.7", only: :test},
       {:faker, "~> 0.18", only: :test},
       {:excoveralls, "~> 0.18", only: :test},

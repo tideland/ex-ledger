@@ -7,18 +7,18 @@
 # General application configuration
 import Config
 
-config :ledger,
-  ecto_repos: [Ledger.Repo],
+config :tideland_ledger,
+  ecto_repos: [TidelandLedger.Repo],
   generators: [timestamp_type: :utc_datetime]
 
 # Configures the endpoint
-config :ledger, LedgerWeb.Endpoint,
+config :tideland_ledger, TidelandLedgerWeb.Endpoint,
   url: [host: "localhost"],
   render_errors: [
-    formats: [html: LedgerWeb.ErrorHTML, json: LedgerWeb.ErrorJSON],
+    formats: [html: TidelandLedgerWeb.ErrorHTML, json: TidelandLedgerWeb.ErrorJSON],
     layout: false
   ],
-  pubsub_server: Ledger.PubSub,
+  pubsub_server: TidelandLedger.PubSub,
   live_view: [signing_salt: "zQxN3Kl9"]
 
 # Configures the mailer
@@ -28,7 +28,7 @@ config :ledger, LedgerWeb.Endpoint,
 #
 # For production it's recommended to configure a different adapter
 # at the `config/runtime.exs`.
-config :ledger, Ledger.Mailer, adapter: Swoosh.Adapters.Local
+config :tideland_ledger, TidelandLedger.Mailer, adapter: Swoosh.Adapters.Local
 
 # Configure esbuild (the version is required)
 config :esbuild,

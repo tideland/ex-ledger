@@ -1,4 +1,4 @@
-defmodule LedgerWeb.ErrorHelpers do
+defmodule TidelandLedgerWeb.ErrorHelpers do
   @moduledoc """
   Conveniences for translating and building error messages.
 
@@ -10,7 +10,7 @@ defmodule LedgerWeb.ErrorHelpers do
 
   use Phoenix.HTML
 
-  alias LedgerWeb.Translations.ErrorMessages
+  alias TidelandLedgerWeb.Translations.ErrorMessages
 
   @doc """
   Generates tag for inlined form input errors.

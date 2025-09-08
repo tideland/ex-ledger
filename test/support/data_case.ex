@@ -1,4 +1,4 @@
-defmodule Ledger.DataCase do
+defmodule TidelandLedger.DataCase do
   @moduledoc """
   This module defines the setup for tests requiring
   access to the application's data layer.
@@ -10,7 +10,7 @@ defmodule Ledger.DataCase do
   we enable the SQL sandbox, so changes done to the database
   are reverted at the end of every test. If you are using
   PostgreSQL, you can even run database tests asynchronously
-  by setting `use Ledger.DataCase, async: true`, although
+  by setting `use TidelandLedger.DataCase, async: true`, although
   this option is not recommendable for other databases.
   """
 
@@ -18,12 +18,12 @@ defmodule Ledger.DataCase do
 
   using do
     quote do
-      alias Ledger.Repo
+      alias TidelandLedger.Repo
 
       import Ecto
       import Ecto.Changeset
       import Ecto.Query
-      import Ledger.DataCase
+      import TidelandLedger.DataCase
     end
   end
 

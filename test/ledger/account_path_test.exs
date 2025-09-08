@@ -1,6 +1,6 @@
-defmodule Ledger.AccountPathTest do
+defmodule TidelandLedger.AccountPathTest do
   use ExUnit.Case, async: true
-  alias Ledger.AccountPath
+  alias TidelandLedger.AccountPath
 
   describe "normalization" do
     test "normalize/1 handles standard format" do

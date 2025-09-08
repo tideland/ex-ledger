@@ -1,4 +1,4 @@
-defmodule Ledger.Auth.Credential do
+defmodule TidelandLedger.Auth.Credential do
   @moduledoc """
   Credential schema for secure password storage.
 
@@ -14,7 +14,7 @@ defmodule Ledger.Auth.Credential do
   use Ecto.Schema
   import Ecto.Changeset
 
-  alias Ledger.Auth.{User, Credential}
+  alias TidelandLedger.Auth.{User, Credential}
 
   @type t :: %__MODULE__{
           id: integer() | nil,
@@ -93,12 +93,12 @@ defmodule Ledger.Auth.Credential do
   """
   def record_failed_attempt(%Credential{} = credential) do
     failed_attempts = credential.failed_attempts + 1
-    max_attempts = Ledger.Config.max_failed_attempts()
+    max_attempts = TidelandLedger.Config.max_failed_attempts()
 
     changeset = change(credential, failed_attempts: failed_attempts)
 
     if failed_attempts >= max_attempts do
-      lockout_duration = Ledger.Config.lockout_duration_minutes()
+      lockout_duration = TidelandLedger.Config.lockout_duration_minutes()
 
       locked_until =
         DateTime.utc_now()
@@ -148,7 +148,7 @@ defmodule Ledger.Auth.Credential do
   end
 
   defp hash_password(password) do
-    case Ledger.Config.password_algorithm() do
+    case TidelandLedger.Config.password_algorithm() do
       "argon2" ->
         Argon2.hash_pwd_salt(password)
 
@@ -190,7 +190,7 @@ defmodule Ledger.Auth.Credential do
   """
   def valid_password?(%Credential{password_hash: hash}, password)
       when is_binary(hash) and is_binary(password) do
-    case Ledger.Config.password_algorithm() do
+    case TidelandLedger.Config.password_algorithm() do
       "argon2" ->
         Argon2.verify_pass(password, hash)
 
@@ -224,7 +224,7 @@ defmodule Ledger.Auth.Credential do
   """
   def password_used_before?(%Credential{previous_password_hashes: history}, password) do
     Enum.any?(history || [], fn old_hash ->
-      case Ledger.Config.password_algorithm() do
+      case TidelandLedger.Config.password_algorithm() do
         "argon2" -> Argon2.verify_pass(password, old_hash)
         "bcrypt" -> Bcrypt.verify_pass(password, old_hash)
         _ -> false

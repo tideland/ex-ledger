@@ -1,4 +1,4 @@
-defmodule Ledger.Amount do
+defmodule TidelandLedger.Amount do
   @moduledoc """
   Represents monetary amounts with exact precision for financial calculations.
 
@@ -171,7 +171,7 @@ defmodule Ledger.Amount do
     new_cents =
       cents
       |> D.new()
-      |> D.mult(to_decimal(factor))
+      |> D.mult(convert_to_decimal(factor))
       |> D.round(0, :half_even)
       |> D.to_integer()
 
@@ -188,7 +188,7 @@ defmodule Ledger.Amount do
     new_cents =
       cents
       |> D.new()
-      |> D.div(to_decimal(divisor))
+      |> D.div(convert_to_decimal(divisor))
       |> D.round(0, :half_even)
       |> D.to_integer()
 
@@ -428,9 +428,9 @@ defmodule Ledger.Amount do
       raise ArgumentError, "Unsupported currency: #{currency}"
   end
 
-  defp to_decimal(value) when is_integer(value), do: D.new(value)
-  defp to_decimal(value) when is_float(value), do: D.from_float(value)
-  defp to_decimal(%D{} = value), do: value
+  defp convert_to_decimal(value) when is_integer(value), do: D.new(value)
+  defp convert_to_decimal(value) when is_float(value), do: D.from_float(value)
+  defp convert_to_decimal(%D{} = value), do: value
 
   defp format_decimal(decimal, decimal_places) do
     # Format as string with proper decimal places
@@ -460,6 +460,6 @@ defmodule Ledger.Amount do
   # These integrate Amount with Elixir's standard protocols
 
   defimpl String.Chars do
-    def to_string(amount), do: Ledger.Amount.to_string(amount)
+    def to_string(amount), do: TidelandLedger.Amount.to_string(amount)
   end
 end

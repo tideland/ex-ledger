@@ -1,4 +1,4 @@
-defmodule Ledger.Config do
+defmodule TidelandLedger.Config do
   @moduledoc """
   Centralized configuration access for the Ledger application.
 

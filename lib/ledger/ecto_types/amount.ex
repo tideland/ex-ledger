@@ -1,4 +1,4 @@
-defmodule Ledger.EctoTypes.Amount do
+defmodule TidelandLedger.EctoTypes.Amount do
   @moduledoc """
   Custom Ecto type for storing and retrieving Amount values.
 
@@ -12,7 +12,7 @@ defmodule Ledger.EctoTypes.Amount do
 
   use Ecto.Type
 
-  alias Ledger.Amount
+  alias TidelandLedger.Amount
 
   @impl true
   def type, do: :map

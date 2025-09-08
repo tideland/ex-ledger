@@ -5,7 +5,7 @@ import Config
 # The MIX_TEST_PARTITION environment variable can be used
 # to provide built-in test partitioning in CI environment.
 # Run `mix help test` for more information.
-config :ledger, Ledger.Repo,
+config :tideland_ledger, TidelandLedger.Repo,
   database:
     Path.expand(
       "../ledger_test#{System.get_env("MIX_TEST_PARTITION")}.db",
@@ -16,13 +16,13 @@ config :ledger, Ledger.Repo,
 
 # We don't run a server during test. If one is required,
 # you can enable the server option below.
-config :ledger, LedgerWeb.Endpoint,
+config :tideland_ledger, TidelandLedgerWeb.Endpoint,
   http: [ip: {127, 0, 0, 1}, port: 4002],
   secret_key_base: "9Ixz8CA+rVQUdEJdHoCZLo8jPO9AqH6lZxKHREjS2h3VF6xCgUe3Y6nBFZMqKc2e",
   server: false
 
 # In test we don't send emails.
-config :ledger, Ledger.Mailer, adapter: Swoosh.Adapters.Test
+config :tideland_ledger, TidelandLedger.Mailer, adapter: Swoosh.Adapters.Test
 
 # Disable swoosh api client as it is only required for production adapters.
 config :swoosh, :api_client, false

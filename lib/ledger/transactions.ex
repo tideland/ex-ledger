@@ -1,4 +1,4 @@
-defmodule Ledger.Transactions do
+defmodule TidelandLedger.Transactions do
   @moduledoc """
   The Transactions context manages all bookkeeping entries and positions.
 
@@ -14,11 +14,11 @@ defmodule Ledger.Transactions do
   import Ecto.Query
   alias Ecto.Multi
 
-  alias Ledger.Repo
-  alias Ledger.Transactions.{Entry, Position}
-  alias Ledger.Accounts
-  alias Ledger.Accounts.Account
-  alias Ledger.Amount
+  alias TidelandLedger.Repo
+  alias TidelandLedger.Transactions.{Entry, Position}
+  alias TidelandLedger.Accounts
+  alias TidelandLedger.Accounts.Account
+  alias TidelandLedger.Amount
 
   # Entry Management
   # These functions handle the creation and modification of entries

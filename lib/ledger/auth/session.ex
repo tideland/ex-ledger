@@ -1,4 +1,4 @@
-defmodule Ledger.Auth.Session do
+defmodule TidelandLedger.Auth.Session do
   @moduledoc """
   Session schema for user session management.
 
@@ -14,7 +14,7 @@ defmodule Ledger.Auth.Session do
   import Ecto.Changeset
   import Ecto.Query
 
-  alias Ledger.Auth.{User, Session}
+  alias TidelandLedger.Auth.{User, Session}
 
   @type t :: %__MODULE__{
           id: String.t(),
@@ -55,7 +55,7 @@ defmodule Ledger.Auth.Session do
   """
   def create_changeset(user_id, attrs \\ %{}) do
     token = generate_token()
-    timeout_minutes = Ledger.Config.session_timeout_minutes()
+    timeout_minutes = TidelandLedger.Config.session_timeout_minutes()
     expires_at = calculate_expiration(timeout_minutes)
 
     %Session{id: token}
@@ -82,8 +82,8 @@ defmodule Ledger.Auth.Session do
       |> change()
       |> put_change(:last_activity_at, DateTime.utc_now() |> DateTime.truncate(:second))
 
-    if Ledger.Config.session_sliding_expiration?() do
-      timeout_minutes = Ledger.Config.session_timeout_minutes()
+    if TidelandLedger.Config.session_sliding_expiration?() do
+      timeout_minutes = TidelandLedger.Config.session_timeout_minutes()
       new_expiration = calculate_expiration(timeout_minutes)
       put_change(changeset, :expires_at, new_expiration)
     else
@@ -179,8 +179,8 @@ defmodule Ledger.Auth.Session do
   and sliding expiration is enabled.
   """
   def needs_refresh?(%Session{} = session) do
-    if Ledger.Config.session_sliding_expiration?() do
-      total_lifetime = Ledger.Config.session_timeout_minutes() * 60
+    if TidelandLedger.Config.session_sliding_expiration?() do
+      total_lifetime = TidelandLedger.Config.session_timeout_minutes() * 60
       remaining = remaining_seconds(session)
       remaining < total_lifetime / 2
     else

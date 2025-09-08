@@ -1,6 +1,6 @@
-defmodule Ledger.Accounts.AccountTest do
-  use Ledger.DataCase, async: true
-  alias Ledger.Accounts.Account
+defmodule TidelandLedger.Accounts.AccountTest do
+  use TidelandLedger.DataCase, async: true
+  alias TidelandLedger.Accounts.Account
 
   describe "changeset/2" do
     test "valid changeset with minimal data" do

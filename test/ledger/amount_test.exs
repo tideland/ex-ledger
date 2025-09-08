@@ -1,6 +1,6 @@
-defmodule Ledger.AmountTest do
+defmodule TidelandLedger.AmountTest do
   use ExUnit.Case, async: true
-  alias Ledger.Amount
+  alias TidelandLedger.Amount
   alias Decimal, as: D
 
   describe "creation and parsing" do

@@ -1,4 +1,4 @@
-defmodule Ledger.Transactions.Entry do
+defmodule TidelandLedger.Transactions.Entry do
   @moduledoc """
   Represents a bookkeeping entry (transaction) in the ledger.
 
@@ -14,8 +14,8 @@ defmodule Ledger.Transactions.Entry do
   import Ecto.Changeset
   import Ecto.Query
 
-  alias Ledger.Transactions.{Entry, Position}
-  alias Ledger.Amount
+  alias TidelandLedger.Transactions.{Entry, Position}
+  alias TidelandLedger.Amount
 
   @type status :: :draft | :posted | :void
   @type t :: %__MODULE__{
@@ -324,7 +324,7 @@ defmodule Ledger.Transactions.Entry do
   @doc """
   Formats an entry for display.
   """
-  def display(%Entry{} = entry, format \\ :full)
+  def display(entry, format \\ :full)
 
   def display(%Entry{date: date, description: desc, reference: ref}, :full) do
     ref_part = if ref, do: " (#{ref})", else: ""

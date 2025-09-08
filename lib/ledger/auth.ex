@@ -1,4 +1,4 @@
-defmodule Ledger.Auth do
+defmodule TidelandLedger.Auth do
   @moduledoc """
   The authentication and authorization context.
 
@@ -14,8 +14,8 @@ defmodule Ledger.Auth do
   import Ecto.Query
   alias Ecto.Multi
 
-  alias Ledger.Repo
-  alias Ledger.Auth.{User, Credential, Session}
+  alias TidelandLedger.Repo
+  alias TidelandLedger.Auth.{User, Credential, Session}
 
   # User Management
   # These functions handle user creation, updates, and queries
@@ -49,7 +49,7 @@ defmodule Ledger.Auth do
       |> Credential.changeset(Map.put(attrs, :user_id, user.id))
     end)
     |> Multi.run(:force_password_change, fn _repo, %{credential: credential} ->
-      if Ledger.Config.force_password_change_on_first_login?() do
+      if TidelandLedger.Config.force_password_change_on_first_login?() do
         credential
         |> Credential.require_password_change()
         |> Repo.update()
@@ -249,7 +249,7 @@ defmodule Ledger.Auth do
   by admins (with proper audit logging).
   """
   def create_session(%User{} = user, attrs \\ %{}) do
-    if Ledger.Config.session_single_per_user?() do
+    if TidelandLedger.Config.session_single_per_user?() do
       # Invalidate existing sessions for this user
       invalidate_user_sessions(user.id)
     end
@@ -381,7 +381,7 @@ defmodule Ledger.Auth do
   """
   def ensure_admin_user_exists do
     if count_users() == 0 do
-      password = Ledger.Config.admin_password() || generate_initial_password()
+      password = TidelandLedger.Config.admin_password() || generate_initial_password()
 
       attrs = %{
         username: "admin",

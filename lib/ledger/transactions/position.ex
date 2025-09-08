@@ -1,4 +1,4 @@
-defmodule Ledger.Transactions.Position do
+defmodule TidelandLedger.Transactions.Position do
   @moduledoc """
   Represents a single line item (position) within a bookkeeping entry.
 
@@ -12,10 +12,11 @@ defmodule Ledger.Transactions.Position do
 
   use Ecto.Schema
   import Ecto.Changeset
+  import Ecto.Query
 
-  alias Ledger.Transactions.{Entry, Position}
-  alias Ledger.Accounts.Account
-  alias Ledger.Amount
+  alias TidelandLedger.Transactions.{Entry, Position}
+  alias TidelandLedger.Accounts.Account
+  alias TidelandLedger.Amount
 
   @type t :: %__MODULE__{
           id: integer() | nil,
@@ -34,7 +35,7 @@ defmodule Ledger.Transactions.Position do
   schema "positions" do
     # The monetary amount for this position
     # Stored as an embedded schema to maintain precision
-    field(:amount, Ledger.EctoTypes.Amount)
+    field(:amount, TidelandLedger.EctoTypes.Amount)
 
     # Optional description specific to this position
     # Can provide more detail than the entry description
@@ -161,7 +162,7 @@ defmodule Ledger.Transactions.Position do
   @doc """
   Formats a position for display.
   """
-  def display(%Position{} = position, format \\ :full)
+  def display(position, format \\ :full)
 
   def display(%Position{account: %Account{} = account, amount: amount}, :full) do
     "#{Account.display(account)} #{Amount.to_string(amount)}"

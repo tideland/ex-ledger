@@ -213,6 +213,76 @@ defmodule TidelandLedger.Config do
     get_config([:auth, :session_sliding_expiration], true)
   end
 
+  @doc """
+  Returns whether only one session per user is allowed.
+
+  Default: false
+  """
+  @spec session_single_per_user?() :: boolean()
+  def session_single_per_user? do
+    get_config([:auth, :session_single_per_user], false)
+  end
+
+  @doc """
+  Returns whether to force password change on first login.
+
+  Default: true
+  """
+  @spec force_password_change_on_first_login?() :: boolean()
+  def force_password_change_on_first_login? do
+    get_config([:auth, :force_password_change_on_first_login], true)
+  end
+
+  @doc """
+  Returns the initial admin password if set.
+
+  Default: nil (random password will be generated)
+  """
+  @spec admin_password() :: String.t() | nil
+  def admin_password do
+    get_config([:auth, :admin_password], nil)
+  end
+
+  @doc """
+  Returns whether passwords must contain uppercase letters.
+
+  Default: true
+  """
+  @spec password_require_uppercase?() :: boolean()
+  def password_require_uppercase? do
+    get_config([:auth, :password_require_uppercase], true)
+  end
+
+  @doc """
+  Returns whether passwords must contain lowercase letters.
+
+  Default: true
+  """
+  @spec password_require_lowercase?() :: boolean()
+  def password_require_lowercase? do
+    get_config([:auth, :password_require_lowercase], true)
+  end
+
+  @doc """
+  Returns whether passwords must contain numbers.
+
+  Default: true
+  """
+  @spec password_require_numbers?() :: boolean()
+  def password_require_numbers? do
+    get_config([:auth, :password_require_numbers], true)
+  end
+
+  @doc """
+  Returns whether passwords must contain special characters.
+
+  Default: false
+  """
+  @spec password_require_special?() :: boolean()
+  def password_require_special? do
+    get_config([:auth, :password_require_special], false)
+  end
+
   # Import/Export configuration
   # These settings control data import and export
 
@@ -361,7 +431,7 @@ defmodule TidelandLedger.Config do
   defp parse_env_value(value, _default), do: value
 
   # TOML configuration support
-  # This will be implemented when TOML config files are added
+  # These functions handle loading and merging TOML configuration files
 
   @doc """
   Loads configuration from a TOML file.
@@ -371,9 +441,101 @@ defmodule TidelandLedger.Config do
   """
   @spec load_toml_config(String.t()) :: :ok | {:error, term()}
   def load_toml_config(path) do
-    # TODO: Implement TOML configuration loading
-    # This will use the :toml library to parse config files
-    # and merge them with Application config
-    :ok
+    case File.read(path) do
+      {:ok, content} ->
+        case Toml.decode(content) do
+          {:ok, config} ->
+            merge_toml_config(config)
+            :ok
+
+          {:error, reason} ->
+            {:error, {:toml_parse_error, reason}}
+        end
+
+      {:error, :enoent} ->
+        # File doesn't exist, that's okay for optional configs
+        :ok
+
+      {:error, reason} ->
+        {:error, {:file_error, reason}}
+    end
   end
+
+  @doc """
+  Loads TOML configuration from multiple possible locations.
+
+  Tries to load configuration from the following locations in order:
+  1. ./config/ledger.toml
+  2. ~/.config/tideland/ledger.toml
+  3. /etc/tideland/ledger.toml
+
+  The first file found will be loaded.
+  """
+  @spec load_default_toml_config() :: :ok | {:error, term()}
+  def load_default_toml_config do
+    config_paths = [
+      "config/ledger.toml",
+      Path.expand("~/.config/tideland/ledger.toml"),
+      "/etc/tideland/ledger.toml"
+    ]
+
+    config_paths
+    |> Enum.find(&File.exists?/1)
+    |> case do
+      # No config file found, use defaults
+      nil -> :ok
+      path -> load_toml_config(path)
+    end
+  end
+
+  # Private helper functions for TOML config management
+
+  defp merge_toml_config(toml_config) do
+    # Convert TOML config to the format expected by Application.put_env
+    app_config = convert_toml_to_app_config(toml_config)
+
+    # Merge with existing application config
+    Enum.each(app_config, fn {key, value} ->
+      current = Application.get_env(:tideland_ledger, key, [])
+      merged = deep_merge_keyword(current, value)
+      Application.put_env(:tideland_ledger, key, merged)
+    end)
+  end
+
+  defp convert_toml_to_app_config(toml_config) do
+    toml_config
+    |> Enum.map(fn {section, values} ->
+      key = String.to_atom(section)
+      converted_values = convert_toml_values(values)
+      {key, converted_values}
+    end)
+  end
+
+  defp convert_toml_values(values) when is_map(values) do
+    Enum.map(values, fn {key, value} ->
+      atom_key = String.to_atom(key)
+      converted_value = convert_toml_value(value)
+      {atom_key, converted_value}
+    end)
+  end
+
+  defp convert_toml_values(value), do: convert_toml_value(value)
+
+  defp convert_toml_value(value) when is_map(value) do
+    convert_toml_values(value)
+  end
+
+  defp convert_toml_value(values) when is_list(values) do
+    Enum.map(values, &convert_toml_value/1)
+  end
+
+  defp convert_toml_value(value), do: value
+
+  defp deep_merge_keyword(left, right) when is_list(left) and is_list(right) do
+    Keyword.merge(left, right, fn _key, left_val, right_val ->
+      deep_merge_keyword(left_val, right_val)
+    end)
+  end
+
+  defp deep_merge_keyword(_left, right), do: right
 end

@@ -30,7 +30,7 @@ defmodule TidelandLedger.Auth.Session do
   # Session token length in bytes (will be base64 encoded)
   @token_bytes 32
 
-  @primary_key {:id, :string, autogenerate: false}
+  @primary_key {:token, :string, autogenerate: false}
   schema "sessions" do
     # Session metadata
     field(:expires_at, :utc_datetime)
@@ -39,7 +39,7 @@ defmodule TidelandLedger.Auth.Session do
     field(:last_activity_at, :utc_datetime)
 
     # User relationship
-    belongs_to(:user, User)
+    belongs_to(:user, User, type: :binary_id)
 
     timestamps(type: :utc_datetime, updated_at: false)
   end
@@ -58,7 +58,7 @@ defmodule TidelandLedger.Auth.Session do
     timeout_minutes = TidelandLedger.Config.session_timeout_minutes()
     expires_at = calculate_expiration(timeout_minutes)
 
-    %Session{id: token}
+    %Session{token: token}
     |> cast(attrs, [:ip_address, :user_agent])
     |> put_change(:user_id, user_id)
     |> put_change(:expires_at, expires_at)
@@ -127,7 +127,7 @@ defmodule TidelandLedger.Auth.Session do
     now = DateTime.utc_now()
 
     from(s in Session,
-      where: s.id == ^token and s.expires_at > ^now,
+      where: s.token == ^token and s.expires_at > ^now,
       preload: [:user]
     )
   end
@@ -193,7 +193,7 @@ defmodule TidelandLedger.Auth.Session do
   """
   def metadata(%Session{} = session) do
     %{
-      session_id: String.slice(session.id, 0, 8) <> "...",
+      session_id: String.slice(session.token, 0, 8) <> "...",
       user_id: session.user_id,
       ip_address: session.ip_address,
       expires_at: session.expires_at,

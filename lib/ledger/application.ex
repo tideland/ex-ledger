@@ -20,8 +20,8 @@ defmodule TidelandLedger.Application do
       # Finch HTTP client
       {Finch, name: TidelandLedger.Finch},
 
-      # Phoenix Endpoint (web server)
-      TidelandLedgerWeb.Endpoint,
+      # Phoenix Endpoint (web server) - commented out until web layer is implemented
+      # TidelandLedgerWeb.Endpoint,
 
       # Background tasks and cleanup
       {Task.Supervisor, name: TidelandLedger.TaskSupervisor},
@@ -48,7 +48,7 @@ defmodule TidelandLedger.Application do
   # whenever the application is updated.
   @impl true
   def config_change(changed, _new, removed) do
-    TidelandLedgerWeb.Endpoint.config_change(changed, removed)
+    # TidelandLedgerWeb.Endpoint.config_change(changed, removed)
     :ok
   end
 

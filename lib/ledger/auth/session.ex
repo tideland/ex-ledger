@@ -17,7 +17,7 @@ defmodule TidelandLedger.Auth.Session do
   alias TidelandLedger.Auth.{User, Session}
 
   @type t :: %__MODULE__{
-          id: String.t(),
+          token: String.t(),
           user_id: integer(),
           expires_at: DateTime.t(),
           ip_address: String.t() | nil,

@@ -94,7 +94,7 @@ defmodule TidelandLedger.Factory do
       parent_path: nil,
       depth: 1,
       active: true,
-      created_by: user
+      created_by_id: user.id
     }
   end
 
@@ -110,7 +110,7 @@ defmodule TidelandLedger.Factory do
       parent_path: parent.path,
       depth: parent.depth + 1,
       active: true,
-      created_by: user
+      created_by_id: user.id
     }
   end
 
@@ -128,7 +128,7 @@ defmodule TidelandLedger.Factory do
       description: sequence(:description, &"Test entry #{&1}"),
       reference: sequence(:reference, &"REF#{&1}"),
       status: :draft,
-      created_by: user,
+      created_by_id: user.id,
       positions: []
     }
   end
@@ -175,7 +175,7 @@ defmodule TidelandLedger.Factory do
     expense_account = insert(:account, path: "Ausgaben : Test")
     cash_account = insert(:account, path: "Vermögen : Kasse")
 
-    entry = insert(:entry, created_by: user)
+    entry = insert(:entry, created_by_id: user.id)
 
     # Create balanced positions
     insert(:position,
@@ -233,7 +233,7 @@ defmodule TidelandLedger.Factory do
         name: "Ausgaben",
         parent_path: nil,
         depth: 1,
-        created_by: user
+        created_by_id: user.id
       )
 
     # Create child account
@@ -243,7 +243,7 @@ defmodule TidelandLedger.Factory do
         name: "Büro",
         parent_path: "Ausgaben",
         depth: 2,
-        created_by: user
+        created_by_id: user.id
       )
 
     # Create grandchild account
@@ -253,7 +253,7 @@ defmodule TidelandLedger.Factory do
         name: "Material",
         parent_path: "Ausgaben : Büro",
         depth: 3,
-        created_by: user
+        created_by_id: user.id
       )
 
     %{root: root, child: child, grandchild: grandchild}

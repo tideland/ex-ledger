@@ -254,8 +254,7 @@ defmodule TidelandLedger.Auth do
       invalidate_user_sessions(user.id)
     end
 
-    %Credential{}
-    |> Session.create_changeset(user.id, attrs)
+    Session.create_changeset(user.id, attrs)
     |> Repo.insert()
     |> case do
       {:ok, session} -> {:ok, Repo.preload(session, :user)}

@@ -493,7 +493,7 @@ defmodule TidelandLedger.Accounts do
       iex> suggest_available_path("Ausgaben : Büro")
       "Ausgaben : Büro 2"  # if original is taken
   """
-  def suggest_available_path(base_path) when is_binary(path) do
+  def suggest_available_path(base_path) when is_binary(base_path) do
     if path_available?(base_path) do
       base_path
     else
@@ -658,7 +658,7 @@ defmodule TidelandLedger.Accounts do
     Repo.one(query) > 0
   end
 
-  defp has_transactions?(%Account{id: account_id}) do
+  defp has_transactions?(%Account{id: _account_id}) do
     # This will be implemented when we have the Position schema
     # For now, return false
     # query = from(p in TidelandLedger.Transactions.Position,

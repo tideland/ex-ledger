@@ -140,11 +140,11 @@ defmodule TidelandLedger.Transactions.Entry do
           Date.compare(date, today) == :gt ->
             add_error(changeset, :date, :future_date_not_allowed)
 
-          Date.diff(today, date) > Ledger.Config.max_backdate_days() ->
+          Date.diff(today, date) > TidelandLedger.Config.max_backdate_days() ->
             add_error(
               changeset,
               :date,
-              {:exceeds_backdate_limit, Ledger.Config.max_backdate_days()}
+              {:exceeds_backdate_limit, TidelandLedger.Config.max_backdate_days()}
             )
 
           true ->
@@ -172,7 +172,7 @@ defmodule TidelandLedger.Transactions.Entry do
   end
 
   defp validate_maximum_positions(changeset, positions) do
-    max = Ledger.Config.max_transaction_positions()
+    max = TidelandLedger.Config.max_transaction_positions()
 
     if length(positions) > max do
       add_error(changeset, :positions, {:exceeds_max_positions, max})

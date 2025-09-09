@@ -16,7 +16,6 @@ defmodule TidelandLedger.Repo.Migrations.CreatePositions do
 
     create(index(:positions, [:entry_id]))
     create(index(:positions, [:account_id]))
-    create(index(:positions, [:entry_id, :position]))
     create(index(:positions, [:tax_relevant]))
     create(unique_index(:positions, [:entry_id, :position]))
   end

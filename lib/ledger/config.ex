@@ -383,7 +383,7 @@ defmodule TidelandLedger.Config do
   end
 
   defp get_in_keyword(config, [], _default) when is_list(config), do: config
-  defp get_in_keyword(config, [], default), do: default
+  defp get_in_keyword(_config, [], default), do: default
 
   defp get_in_keyword(config, [key | rest], default) when is_list(config) do
     config

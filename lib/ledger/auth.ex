@@ -11,6 +11,8 @@ defmodule TidelandLedger.Auth do
   consistent security policies across the application.
   """
 
+  @dialyzer {:nowarn_function, [create_user: 1, change_user_password: 2]}
+
   import Ecto.Query
   alias Ecto.Multi
 

@@ -15,10 +15,12 @@ defmodule TidelandLedger.Accounts do
   import Ecto.Query
   alias Ecto.Multi
 
+  @dialyzer {:nowarn_function,
+             [create_account: 1, update_account: 2, deactivate_account: 1, reactivate_account: 1, delete_account: 1]}
+
   alias TidelandLedger.Repo
   alias TidelandLedger.Accounts.Account
   alias TidelandLedger.AccountPath
-  alias TidelandLedger.Auth.User
 
   # Account Management
   # These functions handle the creation, updates, and lifecycle of accounts

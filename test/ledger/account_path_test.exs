@@ -207,7 +207,7 @@ defmodule TidelandLedger.AccountPathTest do
 
     test "formats with depth indication" do
       result = AccountPath.display("Ausgaben : Büro : Material", :leaf_with_depth)
-      assert result == "      └── Material"
+      assert result == "    └── Material"
     end
 
     test "formats compactly" do

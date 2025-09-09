@@ -84,7 +84,12 @@ defmodule TidelandLedger.Factory do
 
   def account_factory do
     user = insert(:user)
-    path = sequence(:account_path, ["Ausgaben", "Einnahmen", "Vermögen", "Schulden"], & &1)
+
+    path =
+      sequence("account_path", fn i ->
+        paths = ["Ausgaben", "Einnahmen", "Vermögen", "Schulden"]
+        Enum.at(paths, rem(i - 1, length(paths)))
+      end)
 
     %Account{
       path: path,
@@ -267,7 +272,8 @@ defmodule TidelandLedger.Factory do
   # Random test data generators
 
   def random_amount(min \\ 1, max \\ 1000) do
-    value = Enum.random(min..max) + :rand.uniform()
+    # Convert to integer to avoid float conversion issues
+    value = Enum.random(min..max)
     Amount.new(value)
   end
 

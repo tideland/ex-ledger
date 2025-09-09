@@ -41,11 +41,11 @@ defmodule TidelandLedger.Amount do
 
   ## Examples
 
-      iex> Amount.new(123.45)
-      %Amount{cents: 12345, currency: "EUR"}
+      iex> TidelandLedger.Amount.new(123.45)
+      %TidelandLedger.Amount{cents: 12345, currency: "EUR"}
 
-      iex> Amount.new(D.new("123.456"))
-      %Amount{cents: 12346, currency: "EUR"}  # Banker's rounding applied
+      iex> TidelandLedger.Amount.new(Decimal.new("123.456"))
+      %TidelandLedger.Amount{cents: 12346, currency: "EUR"}  # Banker's rounding applied
   """
   def new(decimal, currency \\ @default_currency)
 
@@ -87,10 +87,10 @@ defmodule TidelandLedger.Amount do
   ## Examples
 
       iex> Amount.parse("1.234,56")
-      {:ok, %Amount{cents: 123456, currency: "EUR"}}
+      {:ok, %TidelandLedger.Amount{cents: 123456, currency: "EUR"}}
 
       iex> Amount.parse("1234.56")
-      {:ok, %Amount{cents: 123456, currency: "EUR"}}
+      {:ok, %TidelandLedger.Amount{cents: 123456, currency: "EUR"}}
   """
   def parse(string, currency \\ @default_currency) when is_binary(string) do
     # Detect format by checking last occurrence of comma vs dot
@@ -109,8 +109,8 @@ defmodule TidelandLedger.Amount do
 
     # Remove all whitespace and parse
     case normalized |> String.replace(" ", "") |> D.parse() do
-      {:ok, decimal} -> {:ok, new(decimal, currency)}
-      :error -> {:error, :invalid_format}
+      {decimal, ""} -> {:ok, new(decimal, currency)}
+      _ -> {:error, :invalid_format}
     end
   end
 
@@ -226,9 +226,9 @@ defmodule TidelandLedger.Amount do
 
       iex> Amount.distribute(Amount.new(100), 3)
       [
-        %Amount{cents: 3334, currency: "EUR"},  # 33.34
-        %Amount{cents: 3333, currency: "EUR"},  # 33.33
-        %Amount{cents: 3333, currency: "EUR"}   # 33.33
+        %TidelandLedger.Amount{cents: 3334, currency: "EUR"},  # 33.34
+        %TidelandLedger.Amount{cents: 3333, currency: "EUR"},  # 33.33
+        %TidelandLedger.Amount{cents: 3333, currency: "EUR"}   # 33.33
       ]
   """
   def distribute(%__MODULE__{cents: cents, currency: currency}, parts) when parts > 0 do
@@ -254,9 +254,9 @@ defmodule TidelandLedger.Amount do
 
       iex> Amount.distribute_by_ratio(Amount.new(100), [0.5, 0.3, 0.2])
       [
-        %Amount{cents: 5000, currency: "EUR"},  # 50.00
-        %Amount{cents: 3000, currency: "EUR"},  # 30.00
-        %Amount{cents: 2000, currency: "EUR"}   # 20.00
+        %TidelandLedger.Amount{cents: 5000, currency: "EUR"},  # 50.00
+        %TidelandLedger.Amount{cents: 3000, currency: "EUR"},  # 30.00
+        %TidelandLedger.Amount{cents: 2000, currency: "EUR"}   # 20.00
       ]
   """
   def distribute_by_ratio(%__MODULE__{cents: cents, currency: currency}, ratios) do
@@ -391,7 +391,7 @@ defmodule TidelandLedger.Amount do
   ## Examples
 
       iex> Amount.sum([Amount.new(10), Amount.new(20), Amount.new(30)])
-      %Amount{cents: 6000, currency: "EUR"}  # 60.00
+      %TidelandLedger.Amount{cents: 6000, currency: "EUR"}  # 60.00
   """
   def sum([]), do: zero()
 

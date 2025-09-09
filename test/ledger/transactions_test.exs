@@ -97,7 +97,7 @@ defmodule TidelandLedger.TransactionsTest do
         |> put_in([:positions, 1, :amount], Amount.new(-40))
 
       assert {:error, changeset} = Transactions.create_entry(attrs)
-      assert :transaction_not_balanced in errors_on(changeset).positions
+      assert :transaction_not_balanced in extract_transaction_errors(changeset).positions
     end
 
     test "fails with non-existent account", %{accounts: accounts} do
@@ -114,16 +114,17 @@ defmodule TidelandLedger.TransactionsTest do
       {:ok, _} = Accounts.update_account(accounts.expense, %{active: false})
 
       attrs = valid_entry_attrs(accounts)
+      expense_id = accounts.expense.id
 
-      assert {:error, :accounts, {:accounts_not_found_or_inactive, [accounts.expense.id]}} =
+      assert {:error, :accounts, {:accounts_not_found_or_inactive, [^expense_id]}} =
                Transactions.create_entry(attrs)
     end
 
     test "fails without required fields" do
       assert {:error, changeset} = Transactions.create_entry(%{})
-      assert :required in errors_on(changeset).date
-      assert :required in errors_on(changeset).description
-      assert :required in errors_on(changeset).created_by_id
+      assert :required in extract_transaction_errors(changeset).date
+      assert :required in extract_transaction_errors(changeset).description
+      assert :required in extract_transaction_errors(changeset).created_by_id
     end
 
     test "creates entry with multiple positions", %{accounts: accounts} do
@@ -197,7 +198,7 @@ defmodule TidelandLedger.TransactionsTest do
       }
 
       assert {:error, changeset} = Transactions.update_entry(entry, attrs)
-      assert :transaction_not_balanced in errors_on(changeset).positions
+      assert :transaction_not_balanced in extract_transaction_errors(changeset).positions
     end
   end
 
@@ -302,7 +303,7 @@ defmodule TidelandLedger.TransactionsTest do
 
     test "requires void reason", %{entry: entry} do
       assert {:error, changeset} = Transactions.void_entry(entry, 1, "")
-      assert :required in errors_on(changeset).void_reason
+      assert :required in extract_transaction_errors(changeset).void_reason
     end
   end
 
@@ -432,14 +433,14 @@ defmodule TidelandLedger.TransactionsTest do
         |> Map.put(:date, ~D[2024-01-10])
         |> Transactions.create_entry()
 
-      {:ok, entry1} = Transactions.post_entry(entry1, 1)
+      {:ok, _entry1} = Transactions.post_entry(entry1, 1)
 
       {:ok, entry2} =
         valid_entry_attrs(accounts)
         |> Map.put(:date, ~D[2024-01-20])
         |> Transactions.create_entry()
 
-      {:ok, entry2} = Transactions.post_entry(entry2, 1)
+      {:ok, _entry2} = Transactions.post_entry(entry2, 1)
 
       # Create draft entry
       {:ok, _draft} =
@@ -632,7 +633,7 @@ defmodule TidelandLedger.TransactionsTest do
   end
 
   # Helper function to extract errors from changeset
-  defp errors_on(changeset) do
+  defp extract_transaction_errors(changeset) do
     changeset.errors
     |> Enum.reduce(%{}, fn {field, error}, acc ->
       Map.update(acc, field, [error], fn errors -> [error | errors] end)

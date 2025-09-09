@@ -10,6 +10,7 @@ defmodule TidelandLedger.MixProject do
       start_permanent: Mix.env() == :prod,
       aliases: aliases(),
       deps: deps(),
+      dialyzer: dialyzer(),
 
       # Hex package information
       name: "Tideland Ledger",
@@ -145,6 +146,15 @@ defmodule TidelandLedger.MixProject do
         "Documentation" => "https://hexdocs.pm/tideland_ledger"
       },
       maintainers: ["Frank Mueller"]
+    ]
+  end
+
+  # Dialyzer configuration
+  defp dialyzer do
+    [
+      plt_add_apps: [:mix],
+      ignore_warnings: ".dialyzer_ignore",
+      flags: [:error_handling, :underspecs]
     ]
   end
 end

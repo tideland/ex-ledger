@@ -231,7 +231,7 @@ defmodule TidelandLedgerWeb.Translations.ErrorMessages do
   error messages as values.
   """
   def translate_changeset_errors(changeset, locale \\ :de) do
-    Ecto.Changeset.traverse_errors(changeset, fn {msg, opts} ->
+    Ecto.Changeset.traverse_errors(changeset, fn {msg, _opts} ->
       # Handle both simple messages and those with interpolation
       case msg do
         # If it's already a string (shouldn't happen with our approach)

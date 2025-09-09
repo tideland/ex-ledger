@@ -138,13 +138,13 @@ defmodule TidelandLedger.Transactions.Entry do
 
         cond do
           Date.compare(date, today) == :gt ->
-            add_error(changeset, :date, :future_date_not_allowed)
+            add_error(changeset, :date, "Future dates are not allowed")
 
           Date.diff(today, date) > TidelandLedger.Config.max_backdate_days() ->
             add_error(
               changeset,
               :date,
-              {:exceeds_backdate_limit, TidelandLedger.Config.max_backdate_days()}
+              "Exceeds backdate limit of #{TidelandLedger.Config.max_backdate_days()} days"
             )
 
           true ->
@@ -165,7 +165,7 @@ defmodule TidelandLedger.Transactions.Entry do
 
   defp validate_minimum_positions(changeset, positions) do
     if length(positions) < 2 do
-      add_error(changeset, :positions, :insufficient_positions)
+      add_error(changeset, :positions, "At least 2 positions are required")
     else
       changeset
     end
@@ -175,7 +175,7 @@ defmodule TidelandLedger.Transactions.Entry do
     max = TidelandLedger.Config.max_transaction_positions()
 
     if length(positions) > max do
-      add_error(changeset, :positions, {:exceeds_max_positions, max})
+      add_error(changeset, :positions, "Exceeds maximum of #{max} positions")
     else
       changeset
     end
@@ -196,7 +196,7 @@ defmodule TidelandLedger.Transactions.Entry do
       if Amount.zero?(sum) do
         changeset
       else
-        add_error(changeset, :positions, :transaction_not_balanced)
+        add_error(changeset, :positions, "Transaction must be balanced (sum to zero)")
       end
     end
   end
@@ -210,7 +210,7 @@ defmodule TidelandLedger.Transactions.Entry do
       |> Enum.filter(& &1)
 
     if length(account_ids) != length(Enum.uniq(account_ids)) do
-      add_error(changeset, :positions, :duplicate_accounts)
+      add_error(changeset, :positions, "Duplicate accounts are not allowed")
     else
       changeset
     end
@@ -221,7 +221,7 @@ defmodule TidelandLedger.Transactions.Entry do
 
     cond do
       entry.status != :draft ->
-        add_error(changeset, :status, :already_posted)
+        add_error(changeset, :status, "Entry has already been posted")
 
       # Add more validation here when period closing is implemented
       true ->
@@ -234,7 +234,7 @@ defmodule TidelandLedger.Transactions.Entry do
 
     cond do
       entry.status != :posted ->
-        add_error(changeset, :status, :not_posted)
+        add_error(changeset, :status, "Entry must be posted before it can be voided")
 
       # Add more validation here for void restrictions
       true ->

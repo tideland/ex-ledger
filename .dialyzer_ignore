@@ -1,0 +1,10 @@
+# Suppress Ecto.Multi opaque type warnings - these are false positives
+lib/ledger/accounts.ex:45:11:call_without_opaque
+lib/ledger/accounts.ex:122:11:call_without_opaque
+lib/ledger/accounts.ex:156:11:call_without_opaque
+lib/ledger/auth.ex:45:11:call_without_opaque
+lib/ledger/auth.ex:98:11:call_without_opaque
+lib/ledger/transactions.ex:50:11:call_without_opaque
+lib/ledger/transactions.ex:91:13:call_without_opaque
+lib/ledger/transactions.ex:161:11:call_without_opaque
+lib/ledger/transactions.ex:216:11:call_without_opaque

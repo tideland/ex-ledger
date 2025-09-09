@@ -85,13 +85,13 @@ defmodule TidelandLedger.Transactions.Position do
         changeset
 
       %Amount{cents: 0} ->
-        add_error(changeset, :amount, :zero_amount_not_allowed)
+        add_error(changeset, :amount, "Zero amounts are not allowed")
 
       %Amount{} ->
         changeset
 
       _ ->
-        add_error(changeset, :amount, :invalid_amount)
+        add_error(changeset, :amount, "Invalid amount format")
     end
   end
 

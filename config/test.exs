@@ -21,11 +21,9 @@ config :tideland_ledger, TidelandLedgerWeb.Endpoint,
   secret_key_base: "9Ixz8CA+rVQUdEJdHoCZLo8jPO9AqH6lZxKHREjS2h3VF6xCgUe3Y6nBFZMqKc2e",
   server: false
 
-# In test we don't send emails.
-config :tideland_ledger, TidelandLedger.Mailer, adapter: Swoosh.Adapters.Test
-
-# Disable swoosh api client as it is only required for production adapters.
-config :swoosh, :api_client, false
+# Mailer configuration disabled for now - no email functionality implemented yet
+# config :tideland_ledger, TidelandLedger.Mailer, adapter: Swoosh.Adapters.Test
+# config :swoosh, :api_client, false
 
 # Print only warnings and errors during test
 config :logger, level: :warning

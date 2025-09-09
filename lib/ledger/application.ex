@@ -47,7 +47,7 @@ defmodule TidelandLedger.Application do
   # Tell Phoenix to update the endpoint configuration
   # whenever the application is updated.
   @impl true
-  def config_change(changed, _new, removed) do
+  def config_change(_changed, _new, _removed) do
     # TidelandLedgerWeb.Endpoint.config_change(changed, removed)
     :ok
   end

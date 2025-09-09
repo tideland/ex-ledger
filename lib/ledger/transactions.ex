@@ -14,9 +14,11 @@ defmodule TidelandLedger.Transactions do
   import Ecto.Query
   alias Ecto.Multi
 
+  @dialyzer {:nowarn_function, [create_entry: 1, update_entry: 2, post_entry: 2, void_entry: 3]}
+
   alias TidelandLedger.Repo
   alias TidelandLedger.Transactions.{Entry, Position}
-  alias TidelandLedger.Accounts
+
   alias TidelandLedger.Accounts.Account
   alias TidelandLedger.Amount
 
@@ -472,7 +474,7 @@ defmodule TidelandLedger.Transactions do
     end
   end
 
-  defp create_audit_log(%Entry{} = entry, action, user_id) do
+  defp create_audit_log(%Entry{} = entry, _action, _user_id) do
     # Placeholder for audit log functionality
     # Will be implemented with the audit system
     {:ok, entry}

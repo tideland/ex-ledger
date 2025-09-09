@@ -129,7 +129,7 @@ defmodule TidelandLedger.AuthTest do
         password_confirmation: "NewPassword123"
       }
 
-      assert {:ok, updated_user} = Auth.change_user_password(user, attrs)
+      assert {:ok, _updated_user} = Auth.change_user_password(user, attrs)
 
       # Verify old password no longer works
       result = Auth.authenticate_user("testuser", "OldPassword123", %{})

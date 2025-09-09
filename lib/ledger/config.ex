@@ -378,7 +378,7 @@ defmodule TidelandLedger.Config do
   end
 
   defp get_app_config([root | rest], default) do
-    Application.get_env(:ledger, root, [])
+    Application.get_env(:tideland_ledger, root, [])
     |> get_in_keyword(rest, default)
   end
 
@@ -398,7 +398,7 @@ defmodule TidelandLedger.Config do
     |> Enum.map(&to_string/1)
     |> Enum.map(&String.upcase/1)
     |> Enum.join("_")
-    |> then(&"LEDGER_#{&1}")
+    |> then(&"TIDELAND_LEDGER_#{&1}")
   end
 
   defp parse_env_value(value, default) when is_boolean(default) do

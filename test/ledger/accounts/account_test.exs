@@ -66,7 +66,7 @@ defmodule TidelandLedger.Accounts.AccountTest do
         })
 
       refute changeset.valid?
-      assert :empty_path in errors_on(changeset).path
+      assert "path cannot be empty" in extract_errors_from_changeset(changeset).path
     end
 
     test "invalid with only whitespace path" do
@@ -77,7 +77,7 @@ defmodule TidelandLedger.Accounts.AccountTest do
         })
 
       refute changeset.valid?
-      assert :empty_path in errors_on(changeset).path
+      assert "path cannot be empty" in extract_errors_from_changeset(changeset).path
     end
 
     test "invalid when exceeding max depth" do
@@ -89,7 +89,7 @@ defmodule TidelandLedger.Accounts.AccountTest do
         })
 
       refute changeset.valid?
-      assert {:exceeds_max_depth, 6} in errors_on(changeset).path
+      assert "path exceeds maximum depth of 6" in extract_errors_from_changeset(changeset).path
     end
 
     test "requires created_by_id" do
@@ -99,7 +99,7 @@ defmodule TidelandLedger.Accounts.AccountTest do
         })
 
       refute changeset.valid?
-      assert "can't be blank" in errors_on(changeset).created_by_id
+      assert "can't be blank" in extract_errors_from_changeset(changeset).created_by_id
     end
 
     test "validates description length" do
@@ -113,7 +113,7 @@ defmodule TidelandLedger.Accounts.AccountTest do
         })
 
       refute changeset.valid?
-      assert "should be at most 500 character(s)" in errors_on(changeset).description
+      assert "should be at most 500 character(s)" in extract_errors_from_changeset(changeset).description
     end
 
     test "sets active to true by default" do
@@ -315,7 +315,7 @@ defmodule TidelandLedger.Accounts.AccountTest do
   end
 
   # Helper function to extract errors from changeset
-  defp errors_on(changeset) do
+  defp extract_errors_from_changeset(changeset) do
     changeset.errors
     |> Enum.reduce(%{}, fn {field, error}, acc ->
       Map.update(acc, field, [error], fn errors -> [error | errors] end)

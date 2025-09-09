@@ -13,8 +13,6 @@ defmodule TidelandLedger.AccountPath do
 
   @type t :: String.t()
 
-  alias TidelandLedger.Config
-
   # The standard separator used in normalized paths
   # This ensures consistent formatting throughout the system
   @separator " : "
@@ -33,13 +31,13 @@ defmodule TidelandLedger.AccountPath do
 
   ## Examples
 
-      iex> AccountPath.normalize("Einnahmen:Arbeit:Tideland")
+      iex> TidelandLedger.AccountPath.normalize("Einnahmen:Arbeit:Tideland")
       "Einnahmen : Arbeit : Tideland"
 
-      iex> AccountPath.normalize("Ausgaben  :  Büro:   Material")
+      iex> TidelandLedger.AccountPath.normalize("Ausgaben  :  Büro:   Material")
       "Ausgaben : Büro : Material"
 
-      iex> AccountPath.normalize("Vermögen : Bank : : Girokonto")
+      iex> TidelandLedger.AccountPath.normalize("Vermögen : Bank : : Girokonto")
       "Vermögen : Bank : Girokonto"
   """
   @spec normalize(String.t()) :: t()
@@ -62,33 +60,39 @@ defmodule TidelandLedger.AccountPath do
 
   ## Examples
 
-      iex> AccountPath.valid?("Einnahmen : Arbeit : Tideland")
+      iex> TidelandLedger.AccountPath.valid?("Einnahmen : Arbeit : Tideland")
       true
 
-      iex> AccountPath.valid?("")
+      iex> TidelandLedger.AccountPath.valid?("")
       false
 
-      iex> AccountPath.valid?("Invalid:Path::DoubleColon")
+      iex> TidelandLedger.AccountPath.valid?("Invalid:Path::DoubleColon")
       false
   """
   @spec valid?(String.t()) :: boolean()
   def valid?(path) when is_binary(path) do
-    normalized = normalize(path)
+    # First check for empty path
+    if String.trim(path) == "" do
+      false
+    else
+      # Check for empty segments (double colons) before normalization
+      raw_segments = String.split(path, @separator_regex)
 
-    cond do
-      # Empty path is invalid
-      normalized == "" ->
-        false
+      cond do
+        # Check for any empty segments (which indicates double colons or similar issues)
+        Enum.any?(raw_segments, &(String.trim(&1) == "")) ->
+          false
 
-      # Check depth limit
-      depth(normalized) > Config.max_account_depth() ->
-        false
+        # Check depth limit using raw segments
+        length(raw_segments) > TidelandLedger.Config.max_account_depth() ->
+          false
 
-      # Validate each segment
-      true ->
-        normalized
-        |> segments()
-        |> Enum.all?(&valid_segment?/1)
+        # Validate each segment after trimming
+        true ->
+          raw_segments
+          |> Enum.map(&String.trim/1)
+          |> Enum.all?(&valid_segment?/1)
+      end
     end
   end
 
@@ -100,31 +104,42 @@ defmodule TidelandLedger.AccountPath do
 
   ## Examples
 
-      iex> AccountPath.validate("Einnahmen : Arbeit")
+      iex> TidelandLedger.AccountPath.validate("Einnahmen : Arbeit")
       :ok
 
-      iex> AccountPath.validate("")
+      iex> TidelandLedger.AccountPath.validate("")
       {:error, :empty_path}
 
-      iex> AccountPath.validate("A : B : C : D : E : F : G")
+      iex> TidelandLedger.AccountPath.validate("A : B : C : D : E : F : G")
       {:error, {:exceeds_max_depth, 6}}
   """
   @spec validate(String.t()) :: :ok | {:error, atom() | {atom(), any()}}
   def validate(path) when is_binary(path) do
-    normalized = normalize(path)
+    # First check for empty path
+    if String.trim(path) == "" do
+      {:error, :empty_path}
+    else
+      # Check for empty segments (double colons) before normalization
+      raw_segments = String.split(path, @separator_regex)
 
-    cond do
-      normalized == "" ->
-        {:error, :empty_path}
+      cond do
+        # Check for any empty segments (which indicates double colons or similar issues)
+        Enum.any?(raw_segments, &(String.trim(&1) == "")) ->
+          {:error, :empty_segment}
 
-      depth(normalized) > Config.max_account_depth() ->
-        {:error, {:exceeds_max_depth, Config.max_account_depth()}}
+        # Check depth limit using raw segments
+        length(raw_segments) > TidelandLedger.Config.max_account_depth() ->
+          {:error, {:exceeds_max_depth, TidelandLedger.Config.max_account_depth()}}
 
-      true ->
-        case find_invalid_segment(normalized) do
-          nil -> :ok
-          segment -> {:error, {:invalid_segment, segment}}
-        end
+        # Validate each segment after trimming
+        true ->
+          trimmed_segments = Enum.map(raw_segments, &String.trim/1)
+
+          case Enum.find(trimmed_segments, &(not valid_segment?(&1))) do
+            nil -> :ok
+            segment -> {:error, {:invalid_segment, segment}}
+          end
+      end
     end
   end
 
@@ -135,10 +150,10 @@ defmodule TidelandLedger.AccountPath do
 
   ## Examples
 
-      iex> AccountPath.segments("Ausgaben : Büro : Material")
+      iex> TidelandLedger.AccountPath.segments("Ausgaben : Büro : Material")
       ["Ausgaben", "Büro", "Material"]
 
-      iex> AccountPath.segments("Einnahmen")
+      iex> TidelandLedger.AccountPath.segments("Einnahmen")
       ["Einnahmen"]
   """
   @spec segments(t()) :: [String.t()]
@@ -161,13 +176,13 @@ defmodule TidelandLedger.AccountPath do
 
   ## Examples
 
-      iex> AccountPath.parent("Ausgaben : Büro : Material")
+      iex> TidelandLedger.AccountPath.parent("Ausgaben : Büro : Material")
       "Ausgaben : Büro"
 
-      iex> AccountPath.parent("Ausgaben : Büro")
+      iex> TidelandLedger.AccountPath.parent("Ausgaben : Büro")
       "Ausgaben"
 
-      iex> AccountPath.parent("Ausgaben")
+      iex> TidelandLedger.AccountPath.parent("Ausgaben")
       nil
   """
   @spec parent(t()) :: t() | nil
@@ -193,10 +208,10 @@ defmodule TidelandLedger.AccountPath do
 
   ## Examples
 
-      iex> AccountPath.ancestors("Ausgaben : Büro : Material")
+      iex> TidelandLedger.AccountPath.ancestors("Ausgaben : Büro : Material")
       ["Ausgaben", "Ausgaben : Büro", "Ausgaben : Büro : Material"]
 
-      iex> AccountPath.ancestors("Einnahmen")
+      iex> TidelandLedger.AccountPath.ancestors("Einnahmen")
       ["Einnahmen"]
   """
   @spec ancestors(t()) :: [t()]
@@ -218,10 +233,10 @@ defmodule TidelandLedger.AccountPath do
 
   ## Examples
 
-      iex> AccountPath.ancestors_without_self("Ausgaben : Büro : Material")
+      iex> TidelandLedger.AccountPath.ancestors_without_self("Ausgaben : Büro : Material")
       ["Ausgaben", "Ausgaben : Büro"]
 
-      iex> AccountPath.ancestors_without_self("Einnahmen")
+      iex> TidelandLedger.AccountPath.ancestors_without_self("Einnahmen")
       []
   """
   @spec ancestors_without_self(t()) :: [t()]
@@ -238,13 +253,13 @@ defmodule TidelandLedger.AccountPath do
 
   ## Examples
 
-      iex> AccountPath.depth("Ausgaben")
+      iex> TidelandLedger.AccountPath.depth("Ausgaben")
       1
 
-      iex> AccountPath.depth("Ausgaben : Büro")
+      iex> TidelandLedger.AccountPath.depth("Ausgaben : Büro")
       2
 
-      iex> AccountPath.depth("Ausgaben : Büro : Material")
+      iex> TidelandLedger.AccountPath.depth("Ausgaben : Büro : Material")
       3
   """
   @spec depth(t()) :: non_neg_integer()
@@ -262,10 +277,10 @@ defmodule TidelandLedger.AccountPath do
 
   ## Examples
 
-      iex> AccountPath.leaf("Ausgaben : Büro : Material")
+      iex> TidelandLedger.AccountPath.leaf("Ausgaben : Büro : Material")
       "Material"
 
-      iex> AccountPath.leaf("Einnahmen")
+      iex> TidelandLedger.AccountPath.leaf("Einnahmen")
       "Einnahmen"
   """
   @spec leaf(t()) :: String.t() | nil
@@ -282,13 +297,13 @@ defmodule TidelandLedger.AccountPath do
 
   ## Examples
 
-      iex> AccountPath.join("Ausgaben", "Büro")
+      iex> TidelandLedger.AccountPath.join("Ausgaben", "Büro")
       "Ausgaben : Büro"
 
-      iex> AccountPath.join("Ausgaben : Büro", "Material")
+      iex> TidelandLedger.AccountPath.join("Ausgaben : Büro", "Material")
       "Ausgaben : Büro : Material"
 
-      iex> AccountPath.join("", "Einnahmen")
+      iex> TidelandLedger.AccountPath.join("", "Einnahmen")
       "Einnahmen"
   """
   @spec join(t(), String.t()) :: t()
@@ -311,13 +326,13 @@ defmodule TidelandLedger.AccountPath do
 
   ## Examples
 
-      iex> AccountPath.ancestor?("Ausgaben", "Ausgaben : Büro : Material")
+      iex> TidelandLedger.AccountPath.ancestor?("Ausgaben", "Ausgaben : Büro : Material")
       true
 
-      iex> AccountPath.ancestor?("Ausgaben : Büro", "Ausgaben : Büro")
+      iex> TidelandLedger.AccountPath.ancestor?("Ausgaben : Büro", "Ausgaben : Büro")
       false  # Not an ancestor of itself
 
-      iex> AccountPath.ancestor?("Einnahmen", "Ausgaben : Büro")
+      iex> TidelandLedger.AccountPath.ancestor?("Einnahmen", "Ausgaben : Büro")
       false
   """
   @spec ancestor?(t(), t()) :: boolean()
@@ -337,10 +352,10 @@ defmodule TidelandLedger.AccountPath do
 
   ## Examples
 
-      iex> AccountPath.descendant?("Ausgaben : Büro : Material", "Ausgaben")
+      iex> TidelandLedger.AccountPath.descendant?("Ausgaben : Büro : Material", "Ausgaben")
       true
 
-      iex> AccountPath.descendant?("Ausgaben : Büro", "Einnahmen")
+      iex> TidelandLedger.AccountPath.descendant?("Ausgaben : Büro", "Einnahmen")
       false
   """
   @spec descendant?(t(), t()) :: boolean()
@@ -355,13 +370,13 @@ defmodule TidelandLedger.AccountPath do
 
   ## Examples
 
-      iex> AccountPath.sibling?("Ausgaben : Büro", "Ausgaben : Personal")
+      iex> TidelandLedger.AccountPath.sibling?("Ausgaben : Büro", "Ausgaben : Personal")
       true
 
-      iex> AccountPath.sibling?("Einnahmen", "Ausgaben")
+      iex> TidelandLedger.AccountPath.sibling?("Einnahmen", "Ausgaben")
       true  # Both are root accounts
 
-      iex> AccountPath.sibling?("Ausgaben : Büro", "Ausgaben : Büro : Material")
+      iex> TidelandLedger.AccountPath.sibling?("Ausgaben : Büro", "Ausgaben : Büro : Material")
       false  # Parent-child relationship
   """
   @spec sibling?(t(), t()) :: boolean()
@@ -381,7 +396,7 @@ defmodule TidelandLedger.AccountPath do
 
   ## Examples
 
-      iex> AccountPath.to_uppercase("einnahmen : arbeit : tideland")
+      iex> TidelandLedger.AccountPath.to_uppercase("einnahmen : arbeit : tideland")
       "EINNAHMEN : ARBEIT : TIDELAND"
   """
   @spec to_uppercase(t()) :: t()
@@ -400,13 +415,13 @@ defmodule TidelandLedger.AccountPath do
 
   ## Examples
 
-      iex> AccountPath.display("Ausgaben : Büro : Material")
+      iex> TidelandLedger.AccountPath.display("Ausgaben : Büro : Material")
       "Ausgaben → Büro → Material"
 
-      iex> AccountPath.display("Ausgaben : Büro : Material", :leaf_with_depth)
-      "└── Material"
+      iex> TidelandLedger.AccountPath.display("Ausgaben : Büro : Material", :leaf_with_depth)
+      "    └── Material"
 
-      iex> AccountPath.display("Ausgaben : Büro : Material", :compact)
+      iex> TidelandLedger.AccountPath.display("Ausgaben : Büro : Material", :compact)
       "A : B : Material"
   """
   @spec display(t(), atom()) :: String.t()
@@ -446,11 +461,5 @@ defmodule TidelandLedger.AccountPath do
 
   defp valid_segment?(segment) do
     String.match?(segment, @valid_segment) && String.trim(segment) != ""
-  end
-
-  defp find_invalid_segment(normalized_path) do
-    normalized_path
-    |> do_segments()
-    |> Enum.find(fn segment -> not valid_segment?(segment) end)
   end
 end

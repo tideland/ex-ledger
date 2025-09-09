@@ -17,8 +17,6 @@ defmodule TidelandLedger.Accounts.Account do
   import Ecto.Query
 
   alias TidelandLedger.AccountPath
-  alias TidelandLedger.Accounts.Account
-  alias TidelandLedger.Config
 
   @type t :: %__MODULE__{
           id: integer() | nil,
@@ -123,13 +121,13 @@ defmodule TidelandLedger.Accounts.Account do
             put_change(changeset, :path, normalized)
 
           {:error, :empty_path} ->
-            add_error(changeset, :path, :empty_path)
+            add_error(changeset, :path, "path cannot be empty")
 
           {:error, {:exceeds_max_depth, max}} ->
-            add_error(changeset, :path, {:exceeds_max_depth, max})
+            add_error(changeset, :path, "path exceeds maximum depth of #{max}")
 
           {:error, {:invalid_segment, segment}} ->
-            add_error(changeset, :path, {:invalid_segment, segment})
+            add_error(changeset, :path, "invalid path segment: #{segment}")
         end
     end
   end
@@ -174,7 +172,7 @@ defmodule TidelandLedger.Accounts.Account do
       add_error(
         changeset,
         :active,
-        :has_active_children
+        "cannot deactivate account with active children"
       )
     else
       changeset
@@ -189,7 +187,7 @@ defmodule TidelandLedger.Accounts.Account do
       add_error(
         changeset,
         :active,
-        {:has_recent_transactions, days_to_check}
+        "cannot deactivate account with transactions in the last #{days_to_check} days"
       )
     else
       changeset
@@ -287,10 +285,10 @@ defmodule TidelandLedger.Accounts.Account do
   @doc """
   Checks if an account has transactions within the specified number of days.
   """
-  def has_recent_transactions?(%__MODULE__{id: account_id}, days) do
+  def has_recent_transactions?(%__MODULE__{id: _account_id}, days) do
     # This assumes we have a positions table that links to accounts
     # We'll implement this properly when we create the Position schema
-    cutoff_date = DateTime.utc_now() |> DateTime.add(-days * 24 * 60 * 60, :second)
+    _cutoff_date = DateTime.utc_now() |> DateTime.add(-days * 24 * 60 * 60, :second)
 
     # Placeholder for now - will be implemented with Position schema
     # query =
@@ -335,19 +333,19 @@ defmodule TidelandLedger.Accounts.Account do
   """
   def display(account, format \\ :full_path)
 
-  def display(%__MODULE__{path: path, name: name}, :full_path) do
+  def display(%__MODULE__{path: path, name: _name}, :full_path) do
     path
   end
 
-  def display(%__MODULE__{path: path, name: name}, :name_with_parents) do
+  def display(%__MODULE__{path: path, name: _name}, :name_with_parents) do
     AccountPath.display(path, :compact)
   end
 
-  def display(%__MODULE__{path: path, name: name}, :name_only) do
+  def display(%__MODULE__{path: _path, name: name}, :name_only) do
     name
   end
 
-  def display(%__MODULE__{path: path, name: name, active: active}, :with_status) do
+  def display(%__MODULE__{path: path, name: _name, active: active}, :with_status) do
     status = if active, do: "", else: " (inaktiv)"
     "#{path}#{status}"
   end

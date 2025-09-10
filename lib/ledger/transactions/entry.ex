@@ -181,6 +181,24 @@ defmodule TidelandLedger.Transactions.Entry do
     end
   end
 
+  # Validates that all positions in an entry balance to zero.
+  #
+  # This function implements the fundamental accounting principle of our ledger system
+  # where every transaction must balance (sum of all positions must equal zero).
+  #
+  # The validation process:
+  # - Skips validation if any position already has validation errors
+  # - Extracts amount values from each position, considering both changeset changes and existing data
+  # - Sums all amounts and verifies the sum equals zero (a balanced transaction)
+  # - Adds an error if the transaction is not balanced
+  #
+  # In a ledger-style system:
+  # - The expression `&1.changes[:amount] || &1.data.amount` retrieves the correct amount
+  #   regardless of whether it's in a new or existing position
+  # - A typical transaction might have money flowing from one account to another
+  #   (e.g., expense and cash), with one amount positive and one negative
+  # - More complex transactions can involve multiple positions across different accounts,
+  #   but they must still sum to zero to maintain balance
   defp validate_positions_balance(changeset, positions) do
     # Skip validation if any position has errors
     if Enum.any?(positions, &(!&1.valid?)) do

@@ -567,9 +567,23 @@ defmodule TidelandLedger.Transactions do
 
       iex> trial_balance(~D[2024-01-31])
       [
-        %{account: %Account{}, debit: %Amount{}, credit: %Amount{}, balance: %Amount{}},
+        %{account: %Account{}, positive: %Amount{}, negative: %Amount{}, balance: %Amount{}},
         ...
       ]
+
+  The trial balance is a fundamental accounting report that lists all accounts with their
+  positive and negative balances to verify that the overall ledger is balanced.
+
+  This report:
+  - Shows account balances as of a specific date
+  - Displays amounts split into positive and negative components
+  - Calculates the net balance for each account
+  - Helps identify potential accounting errors or imbalances
+
+  Implementation notes:
+  - Uses Ecto to query account data with related positions
+  - Filters by date and only includes posted entries
+  - Maintains amount precision through all calculations
   """
   def trial_balance(as_of_date \\ Date.utc_today()) do
     query =
@@ -595,19 +609,19 @@ defmodule TidelandLedger.Transactions do
     |> Enum.map(fn %{account: account, positions: positions} ->
       amounts = Enum.map(positions, & &1["amount"])
 
-      {debit_amounts, credit_amounts} =
+      {positive_amounts, negative_amounts} =
         Enum.split_with(amounts, fn amount ->
           amount && amount["cents"] > 0
         end)
 
-      debit_total = calculate_total(debit_amounts)
-      credit_total = calculate_total(credit_amounts)
-      balance = Amount.subtract(debit_total, credit_total)
+      positive_total = calculate_total(positive_amounts)
+      negative_total = calculate_total(negative_amounts)
+      balance = Amount.subtract(positive_total, negative_total)
 
       %{
         account: account,
-        debit: debit_total,
-        credit: Amount.abs(credit_total),
+        positive: positive_total,
+        negative: Amount.abs(negative_total),
         balance: balance
       }
     end)
@@ -615,6 +629,19 @@ defmodule TidelandLedger.Transactions do
     |> Enum.sort_by(& &1.account.path)
   end
 
+  # Calculates the total amount from a list of amount maps.
+  #
+  # This helper function converts JSON-based amount representations back into
+  # Amount structs and calculates their sum.
+  #
+  # The function:
+  # - Handles the empty list special case by returning zero
+  # - Converts each JSON amount map to a proper Amount struct
+  # - Applies default values for missing data
+  # - Sums all amounts consistently
+  #
+  # Note: The implementation respects the configured default currency
+  # and handles potential missing values in the data.
   defp calculate_total([]), do: Amount.zero()
 
   defp calculate_total(amounts) do

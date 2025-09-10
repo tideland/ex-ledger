@@ -78,7 +78,7 @@ defmodule Ledger.MixProject do
   end
 
   defp description do
-    "A double-entry bookkeeping system with German tax support"
+    "A ledger-style bookkeeping system with German tax support"
   end
 
   defp package do

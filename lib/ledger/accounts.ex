@@ -10,6 +10,19 @@ defmodule TidelandLedger.Accounts do
   The hierarchical nature of accounts is fundamental to the ledger system,
   enabling organized financial reporting and easy navigation of the chart
   of accounts.
+
+  ## Framework Integration
+
+  This context uses Ecto.Multi for transactional operations, grouping multiple
+  database operations into a single transaction that ensures atomic success
+  or failure of the entire operation. The Multi pattern is used consistently
+  throughout the module for maintaining data integrity.
+
+  Key patterns in this module:
+  - Validation checks run within transactions to ensure consistency
+  - Explicit error handling with meaningful return values
+  - Clean separation between validation logic and persistence operations
+  - Custom validations using Multi.run/3 to integrate business rules
   """
 
   import Ecto.Query
@@ -29,8 +42,12 @@ defmodule TidelandLedger.Accounts do
   Creates a new account with the given attributes.
 
   The account path is validated and normalized before creation. If the account
-  has a parent, the parent must exist and be active. The account hierarchy is
+  has a parent, the parent must exist and is active. The account hierarchy is
   automatically maintained.
+
+  The function validates the parent account first, then proceeds with creation
+  only if the parent exists and is active. This validation is performed within
+  the transaction to ensure consistency.
 
   ## Examples
 
@@ -45,6 +62,7 @@ defmodule TidelandLedger.Accounts do
       {:error, %Ecto.Changeset{}}
   """
   def create_account(attrs \\ %{}) do
+    # Transactional account creation with validation
     Multi.new()
     |> Multi.run(:validate_parent, fn _repo, _changes ->
       validate_parent_exists_and_active(attrs[:path])
@@ -122,6 +140,7 @@ defmodule TidelandLedger.Accounts do
       {:error, :inactive_parent}
   """
   def reactivate_account(%Account{} = account) do
+    # Account activation requires all parents to be active first
     Multi.new()
     |> Multi.run(:validate_parents_active, fn _repo, _changes ->
       validate_all_parents_active(account.path)
@@ -132,7 +151,7 @@ defmodule TidelandLedger.Accounts do
       {:ok, %{account: account}} ->
         {:ok, account}
 
-      {:error, :validate_parents_active, reason, _} ->
+      {:error, :validate_parent, reason, _} ->
         {:error, reason}
 
       {:error, :account, changeset, _} ->
@@ -156,6 +175,7 @@ defmodule TidelandLedger.Accounts do
       {:error, :has_transactions}
   """
   def delete_account(%Account{} = account) do
+    # Account deletion requires validation of both children and transaction history
     Multi.new()
     |> Multi.run(:validate_no_children, fn _repo, _changes ->
       if has_children?(account) do

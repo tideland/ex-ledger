@@ -10,6 +10,8 @@ defmodule TidelandLedger.Amount do
   The module provides a complete set of operations for monetary calculations including
   arithmetic, comparison, formatting, and distribution of amounts across multiple
   recipients while ensuring no cents are lost.
+
+  The module also implements the String.Chars protocol for seamless string interpolation.
   """
 
   alias Decimal, as: D
@@ -459,6 +461,21 @@ defmodule TidelandLedger.Amount do
   # Protocol implementations
   # These integrate Amount with Elixir's standard protocols
 
+  # String.Chars Protocol Implementation
+  #
+  # This implementation enables automatic string conversion when Amount values
+  # are used in string interpolation (e.g., `"Balance: #{amount}"`).
+  #
+  # It delegates to the to_string/1 function to maintain consistent
+  # formatting throughout the application, ensuring amounts are always
+  # displayed with proper currency symbols and formatting.
+  #
+  # Without this implementation, code would need to explicitly call
+  # Amount.to_string(amount) in every string context.
+  #
+  # Example:
+  #   amount = TidelandLedger.Amount.new(1234)
+  #   "The balance is #{amount}"  # => "The balance is 12,34 €"
   defimpl String.Chars do
     def to_string(amount), do: TidelandLedger.Amount.to_string(amount)
   end

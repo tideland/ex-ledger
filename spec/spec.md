@@ -59,7 +59,7 @@ For detailed implementation guidance, refer to these companion documents:
 - `ledger-concepts.md`: Accounting principles and domain concepts
 - `glossary.md`: Canonical terminology with English/German translations
 - `impexp-design.md`: Import/export specifications and data formats
-- `review-comments.md`: External review feedback and responses
+
 - `auth-design.md`: Authentication system design with future extraction plan
 
 ## 3. Core System Requirements
@@ -437,17 +437,33 @@ For detailed implementation guidance, refer to these companion documents:
 
 ### REQ-08-02: Documentation Standards
 
-**Requirement**: Comprehensive documentation at all levels.
+**Requirement**: Comprehensive, semantically meaningful documentation at all levels.
 
 **Constraints**:
 
-- Module documentation with examples
-- Function specs with @doc and @spec
-- Semantic comments explaining why, not what
+- Module documentation with purpose, responsibility, and examples
+- Function specs with @doc and @spec describing semantics, not implementation
+- Comments focused on explaining the "why" behind business decisions
+- Protocol implementations documented with business purpose and usage context
+- External framework interactions documented with clear integration points
+- Ledger-specific accounting terminology used consistently (avoid double-entry terms)
+- Domain-specific terminology linked to the glossary
+- Public APIs documented with complete usage examples
 
-**Solution**: ExDoc with comprehensive @moduledoc and @doc
+**Solution**:
 
-**Rationale**: Good documentation is essential for learning projects and maintainability.
+- ExDoc with comprehensive @moduledoc and @doc
+- Semantic documentation focused on business meaning
+- Clear separation between framework integration and business logic
+- Explicit documentation of system boundaries and integration points
+
+**Rationale**:
+
+- Good documentation focuses on meaning rather than implementation details
+- Semantic understanding of the system is more valuable than technical minutiae
+- Maintaining clear terminology prevents conceptual confusion
+- Documentation should be valuable for all developers regardless of experience level
+- Understanding business context is crucial for maintaining accounting systems
 
 ### REQ-08-03: Testing Strategy
 

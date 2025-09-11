@@ -1,6 +1,16 @@
 defmodule LedgerWeb.Router do
   use LedgerWeb, :router
 
+  # Print debug message during compile
+  require Logger
+  Logger.info("Compiling LedgerWeb.Router...")
+
+  # Debug helper
+  def debug_path(conn, _opts) do
+    Logger.info("Router processing path: #{inspect(conn.request_path)}")
+    conn
+  end
+
   @doc """
   Helper function to ensure LiveView assigns have the required default values.
   """
@@ -17,6 +27,7 @@ defmodule LedgerWeb.Router do
     plug :put_root_layout, {LedgerWeb.Layouts, :root}
     plug :protect_from_forgery
     plug :put_secure_browser_headers
+    plug :debug_path
   end
 
   # Add default assigns to all LiveViews
@@ -27,6 +38,15 @@ defmodule LedgerWeb.Router do
 
   scope "/", LedgerWeb do
     pipe_through :browser
+
+    # Static page route for testing
+    get "/static", PageController, :index
+
+    # Debug route for basic connectivity testing
+    get "/debug", PageController, :debug
+
+    # Static dashboard for testing
+    get "/dashboard", PageController, :dashboard
 
     live_session :default, on_mount: [{LedgerWeb.Router, :default}] do
       # LiveView routes

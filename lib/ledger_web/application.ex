@@ -5,10 +5,14 @@ defmodule LedgerWeb.Application do
   This module defines and supervises the web-specific processes of the Ledger application.
   It is separate from the main Ledger.Application module to keep web concerns isolated.
   """
-  use Application
+  use Supervisor
+
+  def start_link(init_arg) do
+    Supervisor.start_link(__MODULE__, init_arg, name: __MODULE__)
+  end
 
   @impl true
-  def start(_type, _args) do
+  def init(_init_arg) do
     children = [
       # Start the Telemetry supervisor
       LedgerWeb.Telemetry,
@@ -19,11 +23,9 @@ defmodule LedgerWeb.Application do
 
     # See https://hexdocs.pm/elixir/Supervisor.html
     # for other strategies and supported options
-    opts = [strategy: :one_for_one, name: LedgerWeb.Supervisor]
-    Supervisor.start_link(children, opts)
+    Supervisor.init(children, strategy: :one_for_one)
   end
 
-  @impl true
   def config_change(changed, _new, removed) do
     LedgerWeb.Endpoint.config_change(changed, removed)
     :ok

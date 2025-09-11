@@ -8,6 +8,20 @@ config :tideland_ledger, TidelandLedger.Repo,
   stacktrace: true,
   show_sensitive_data_on_connection_error: true
 
+# Configure LedgerWeb endpoint for development
+config :tideland_ledger, LedgerWeb.Endpoint,
+  http: [ip: {127, 0, 0, 1}, port: 4002],
+  check_origin: false,
+  code_reloader: true,
+  debug_errors: true,
+  watchers: [],
+  live_reload: [
+    patterns: [
+      ~r"priv/static/.*(js|css|png|jpeg|jpg|gif|svg)$",
+      ~r"lib/ledger_web/(controllers|live|components)/.*(ex|heex)$"
+    ]
+  ]
+
 # For development, we disable any cache and enable
 # debugging and code reloading.
 #

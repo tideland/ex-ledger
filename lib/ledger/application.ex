@@ -20,8 +20,8 @@ defmodule TidelandLedger.Application do
       # Finch HTTP client
       {Finch, name: TidelandLedger.Finch},
 
-      # Start the Web Application
-      LedgerWeb.Application,
+      # Start the Web Application as a supervisor
+      {LedgerWeb.Application, []},
 
       # Background tasks and cleanup
       {Task.Supervisor, name: TidelandLedger.TaskSupervisor},

@@ -13,6 +13,9 @@ defmodule LedgerWeb.DashboardLive do
 
   @impl true
   def mount(_params, _session, socket) do
+    require Logger
+    Logger.info("DashboardLive.mount called")
+
     socket =
       socket
       |> assign(:page_title, "Übersicht")
@@ -20,11 +23,15 @@ defmodule LedgerWeb.DashboardLive do
       |> assign(:account_balances, fetch_account_balances())
       |> assign(:recent_entries, fetch_recent_entries())
 
+    Logger.info("DashboardLive.mount completed")
     {:ok, socket}
   end
 
   @impl true
   def render(assigns) do
+    require Logger
+    Logger.info("DashboardLive.render called")
+
     ~H"""
     <div class="dashboard">
       <.header>Übersicht</.header>
@@ -82,12 +89,16 @@ defmodule LedgerWeb.DashboardLive do
   end
 
   @impl true
-  def handle_event("navigate", %{"to" => path}, socket) do
-    {:noreply, push_navigate(socket, to: path)}
+  def handle_event("navigate", %{"to" => to}, socket) do
+    require Logger
+    Logger.info("DashboardLive.handle_event navigate to: #{to}")
+    {:noreply, push_navigate(socket, to: to)}
   end
 
   @impl true
   def handle_event("view-entry", %{"id" => id}, socket) do
+    require Logger
+    Logger.info("DashboardLive.handle_event view-entry id: #{id}")
     {:noreply, push_navigate(socket, to: "/buchungen/#{id}")}
   end
 

@@ -14,12 +14,14 @@ config :tideland_ledger,
 # Configures our new endpoint
 config :tideland_ledger, LedgerWeb.Endpoint,
   url: [host: "localhost"],
+  http: [ip: {127, 0, 0, 1}, port: 4000],
   render_errors: [
     formats: [html: LedgerWeb.ErrorHTML, json: LedgerWeb.ErrorJSON],
     layout: false
   ],
   pubsub_server: TidelandLedger.PubSub,
-  live_view: [signing_salt: "zQxN3Kl9"]
+  live_view: [signing_salt: "zQxN3Kl9"],
+  secret_key_base: "bqZzUD/KcB2rR0aST6YpLlDz8vJFqV9CyNBhJl+D0r1M9gH8L4TvmYRYcKq9I2D3"
 
 # Configures the endpoint
 config :tideland_ledger, TidelandLedgerWeb.Endpoint,

@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="de">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="csrf-token" content={get_csrf_token()} />
+    <title><%= assigns[:page_title] || "Tideland Ledger" %></title>
+    <link rel="stylesheet" href="/assets/app.css" />
+    <script defer src="/assets/app.js">
+    </script>
+  </head>
+  <body>
+    <div class="container">
+      <header class="main-header">
+        <div class="brand">Tideland Ledger</div>
+        <div class="user-controls">
+          <span class="user-name">[Benutzer]</span>
+          <a href="#" class="logout-link">[Abmelden]</a>
+        </div>
+      </header>
+      <div class="main-container">
+        <nav class="menu">
+          <a href="/" class={["menu-item", @current_path == "/" && "active"]}>
+            Übersicht
+          </a>
+          <a href="/buchungen" class={["menu-item", String.starts_with?(@current_path, "/buchungen") && "active"]}>
+            Buchungen
+          </a>
+          <a href="/konten" class={["menu-item", String.starts_with?(@current_path, "/konten") && "active"]}>
+            Konten
+          </a>
+          <a href="/vorlagen" class={["menu-item", String.starts_with?(@current_path, "/vorlagen") && "active"]}>
+            Vorlagen
+          </a>
+          <a href="/berichte" class={["menu-item", String.starts_with?(@current_path, "/berichte") && "active"]}>
+            Berichte
+          </a>
+          <a href="/benutzer" class={["menu-item", String.starts_with?(@current_path, "/benutzer") && "active"]}>
+            Benutzer
+          </a>
+        </nav>
+        <main class="content">
+          <%= @inner_content %>
+        </main>
+      </div>
+      <footer class="main-footer">
+        <div class="status-message">[Status: Bereit]</div>
+        <div class="footer-controls">
+          <span class="version">v0.1.0</span>
+          <a href="#" class="help-link">[Hilfe]</a>
+        </div>
+      </footer>
+    </div>
+  </body>
+</html>

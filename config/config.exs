@@ -11,6 +11,16 @@ config :tideland_ledger,
   ecto_repos: [TidelandLedger.Repo],
   generators: [timestamp_type: :utc_datetime]
 
+# Configures our new endpoint
+config :tideland_ledger, LedgerWeb.Endpoint,
+  url: [host: "localhost"],
+  render_errors: [
+    formats: [html: LedgerWeb.ErrorHTML, json: LedgerWeb.ErrorJSON],
+    layout: false
+  ],
+  pubsub_server: TidelandLedger.PubSub,
+  live_view: [signing_salt: "zQxN3Kl9"]
+
 # Configures the endpoint
 config :tideland_ledger, TidelandLedgerWeb.Endpoint,
   url: [host: "localhost"],

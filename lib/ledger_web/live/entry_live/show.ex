@@ -37,8 +37,8 @@ defmodule LedgerWeb.EntryLive.Show do
       <.header>Buchung anzeigen</.header>
 
       <div class="header-actions">
-        <button phx-click="navigate" phx-value-to={"/buchungen/#{@entry.id}/bearbeiten"} class="button">Bearbeiten</button>
-        <button phx-click="navigate" phx-value-to="/buchungen" class="button secondary">Zurück</button>
+        <.button phx-click="navigate" phx-value-to={"/entries/#{@entry.id}/edit"}>Bearbeiten</.button>
+        <.button phx-click="navigate" phx-value-to="/entries" class="secondary">Zurück</.button>
       </div>
 
       <div class="entry-details">
@@ -100,7 +100,7 @@ defmodule LedgerWeb.EntryLive.Show do
   def handle_event("delete", _, socket) do
     # In a real implementation, this would delete the entry
     # For now, just navigate back to the index
-    {:noreply, push_navigate(socket, to: "/buchungen")}
+    {:noreply, push_navigate(socket, to: "/entries")}
   end
 
   # Helper functions

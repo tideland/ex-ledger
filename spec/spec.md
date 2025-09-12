@@ -308,10 +308,23 @@ For detailed implementation guidance, refer to these companion documents:
 - All functions accessible within 2 clicks
 - No nested menus
 - Vertical menu for variable page widths
+- URL paths in standard English with kebab-case for multi-word terms
 
-**Solution**: Fixed vertical navigation with main sections
+**Solution**: Fixed vertical navigation with main sections and standardized URL paths
 
-**Rationale**: Vertical menus work better with unknown page widths and provide room for German text. Flat navigation reduces cognitive load.
+**Example URL paths**:
+
+- `/` (Dashboard) - UI text: "Übersicht"
+- `/entries` (Entries list) - UI text: "Buchungen"
+- `/entries/new` (New entry) - UI text: "Neue Buchung"
+- `/entries/:id` (View entry) - UI text: "Buchung anzeigen"
+- `/entries/:id/edit` (Edit entry) - UI text: "Buchung bearbeiten"
+- `/accounts` (Accounts list) - UI text: "Konten"
+- `/templates` (Templates) - UI text: "Vorlagen"
+- `/reports` (Reports) - UI text: "Berichte"
+- `/users` (Users) - UI text: "Benutzer"
+
+**Rationale**: Vertical menus work better with unknown page widths and provide room for German text. Flat navigation reduces cognitive load. Standard English URLs with kebab-case follow web conventions and improve interoperability, while the UI text remains in German as specified in REQ-04-01: Language.
 
 ## 7. Data Entry Requirements
 

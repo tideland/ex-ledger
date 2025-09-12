@@ -55,7 +55,7 @@ defmodule LedgerWeb.PageController do
           <h3>Next Steps</h3>
           <p>Try visiting the LiveView path: <a href="/">/</a></p>
           <p>Or try the debug route: <a href="/debug">/debug</a></p>
-          <p>Or try the static dashboard: <a href="/dashboard">/dashboard</a></p>
+          <p>Or try the static dashboard: <a href="/static-dashboard">/static-dashboard</a></p>
         </div>
         <div class="footer">
           <p>Tideland Ledger - Static Test Page</p>
@@ -102,11 +102,11 @@ defmodule LedgerWeb.PageController do
           <div class="main-container">
             <nav class="menu">
               <a href="/" class="menu-item active">Übersicht</a>
-              <a href="/buchungen" class="menu-item">Buchungen</a>
-              <a href="/konten" class="menu-item">Konten</a>
-              <a href="/vorlagen" class="menu-item">Vorlagen</a>
-              <a href="/berichte" class="menu-item">Berichte</a>
-              <a href="/benutzer" class="menu-item">Benutzer</a>
+              <a href="/entries" class="menu-item">Buchungen</a>
+              <a href="/accounts" class="menu-item">Konten</a>
+              <a href="/templates" class="menu-item">Vorlagen</a>
+              <a href="/reports" class="menu-item">Berichte</a>
+              <a href="/users" class="menu-item">Benutzer</a>
             </nav>
             <main class="content">
               <div class="dashboard">

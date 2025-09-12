@@ -234,12 +234,12 @@ defmodule LedgerWeb.EntryLive.New do
     # In a real implementation, this would save the entry
     # For now, just navigate back to the index
 
-    {:noreply, push_navigate(socket, to: "/buchungen")}
+    {:noreply, push_navigate(socket, to: "/entries")}
   end
 
   @impl true
   def handle_event("cancel", _, socket) do
-    {:noreply, push_navigate(socket, to: "/buchungen")}
+    {:noreply, push_navigate(socket, to: "/entries")}
   end
 
   @impl true

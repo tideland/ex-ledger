@@ -99,6 +99,20 @@ The Tideland Ledger is a web-based simplified ledger-style bookkeeping system im
 - Account management screens
 - User profile and settings
 
+### 4.3 URL Structure
+
+- All URLs must use English terms, not German translations
+- URLs must use kebab-case for multi-word terms (e.g., `/account-path` not `/accountPath`)
+- Consistent naming across the application
+- Primary URL paths (with corresponding German UI text):
+  - `/` - Dashboard (UI: "Übersicht")
+  - `/entries` - Entries list (UI: "Buchungen")
+  - `/entries/new` - New entry (UI: "Neue Buchung")
+  - `/accounts` - Accounts list (UI: "Konten")
+  - `/templates` - Templates (UI: "Vorlagen")
+  - `/reports` - Reports (UI: "Berichte")
+  - `/users` - Users (UI: "Benutzer")
+
 ## 5. Non-Functional Requirements
 
 ### 5.1 Performance
@@ -134,7 +148,9 @@ The Tideland Ledger is a web-based simplified ledger-style bookkeeping system im
 
 - Business logic returns error atoms/symbols, not translated strings
 - Translation happens only at the UI layer
-- German language UI with potential for future language additions
+- German language UI text with potential for future language additions
+- English language for all code, URLs, database fields, and technical references
+- Clear separation: English for system internals, German for user-facing content
 - Separation of concerns between business logic and presentation
 
 ## 6. Development Priorities

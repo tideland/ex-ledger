@@ -325,7 +325,7 @@ def handle_event("select_version", %{"version" => version}, socket) do
    |> assign(selected_version: version)
    |> apply_template_preview(socket.assigns.selected_template, version)}
 end
-````
+```
 
 ### 4.3 Account Management (Konten)
 
@@ -618,7 +618,7 @@ end
 
 ### 7.2 Keyboard Shortcuts
 
-- `Alt+N` - Neue Buchung (New entry)
+- `Alt+N` - Neue Buchung (New Entry)
 - `Alt+K` - Konten (Accounts)
 - `Alt+B` - Berichte (Reports)
 - `Tab` - Navigate between fields
@@ -720,3 +720,4 @@ end
 - Clear component boundaries
 
 This WUI design provides a clean, functional interface that aligns with the project's goals of simplicity and learning while delivering a professional bookkeeping application.
+````

@@ -39,7 +39,7 @@ defmodule LedgerWeb.DashboardLive do
       <div class="dashboard-grid">
         <.card title="Kontensalden">
           <:actions>
-            <.button phx-click="navigate" phx-value-to="/konten" class="secondary">Alle Konten anzeigen</.button>
+            <.button phx-click="navigate" phx-value-to="/accounts" class="secondary">Alle Konten anzeigen</.button>
           </:actions>
 
           <div class="account-balances">
@@ -58,7 +58,7 @@ defmodule LedgerWeb.DashboardLive do
 
         <.card title="Letzte Buchungen">
           <:actions>
-            <.button phx-click="navigate" phx-value-to="/buchungen" class="secondary">Alle Buchungen anzeigen</.button>
+            <.button phx-click="navigate" phx-value-to="/entries" class="secondary">Alle Buchungen anzeigen</.button>
           </:actions>
 
           <div class="recent-entries">
@@ -79,9 +79,9 @@ defmodule LedgerWeb.DashboardLive do
 
       <.card title="Schnellaktionen">
         <div class="quick-actions">
-          <.button phx-click="navigate" phx-value-to="/buchungen/neu">Neue Buchung</.button>
-          <.button phx-click="navigate" phx-value-to="/vorlagen">Vorlage anwenden</.button>
-          <.button phx-click="navigate" phx-value-to="/berichte">Bericht erstellen</.button>
+          <.button phx-click="navigate" phx-value-to="/entries/new">Neue Buchung</.button>
+          <.button phx-click="navigate" phx-value-to="/templates">Vorlage anwenden</.button>
+          <.button phx-click="navigate" phx-value-to="/reports">Bericht erstellen</.button>
         </div>
       </.card>
     </div>
@@ -99,7 +99,7 @@ defmodule LedgerWeb.DashboardLive do
   def handle_event("view-entry", %{"id" => id}, socket) do
     require Logger
     Logger.info("DashboardLive.handle_event view-entry id: #{id}")
-    {:noreply, push_navigate(socket, to: "/buchungen/#{id}")}
+    {:noreply, push_navigate(socket, to: "/entries/#{id}")}
   end
 
   # Helper functions

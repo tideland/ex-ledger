@@ -46,31 +46,31 @@ defmodule LedgerWeb.Router do
     get "/debug", PageController, :debug
 
     # Static dashboard for testing
-    get "/dashboard", PageController, :dashboard
+    get "/static-dashboard", PageController, :dashboard
 
     live_session :default, on_mount: [{LedgerWeb.Router, :default}] do
       # LiveView routes
       live "/", DashboardLive, :index
-      live "/buchungen", EntryLive.Index, :index
-      live "/buchungen/neu", EntryLive.New, :new
-      live "/buchungen/:id", EntryLive.Show, :show
-      live "/buchungen/:id/bearbeiten", EntryLive.Edit, :edit
+      live "/entries", EntryLive.Index, :index
+      live "/entries/new", EntryLive.New, :new
+      live "/entries/:id", EntryLive.Show, :show
+      live "/entries/:id/edit", EntryLive.Edit, :edit
 
-      live "/konten", AccountLive.Index, :index
-      live "/konten/neu", AccountLive.New, :new
-      live "/konten/:id", AccountLive.Show, :show
-      live "/konten/:id/bearbeiten", AccountLive.Edit, :edit
+      live "/accounts", AccountLive.Index, :index
+      live "/accounts/new", AccountLive.New, :new
+      live "/accounts/:id", AccountLive.Show, :show
+      live "/accounts/:id/edit", AccountLive.Edit, :edit
 
-      live "/vorlagen", TemplateLive.Index, :index
-      live "/vorlagen/neu", TemplateLive.New, :new
-      live "/vorlagen/:id", TemplateLive.Show, :show
+      live "/templates", TemplateLive.Index, :index
+      live "/templates/new", TemplateLive.New, :new
+      live "/templates/:id", TemplateLive.Show, :show
 
-      live "/berichte", ReportLive.Index, :index
+      live "/reports", ReportLive.Index, :index
 
-      live "/benutzer", UserLive.Index, :index
-      live "/benutzer/neu", UserLive.New, :new
-      live "/benutzer/:id", UserLive.Show, :show
-      live "/benutzer/:id/bearbeiten", UserLive.Edit, :edit
+      live "/users", UserLive.Index, :index
+      live "/users/new", UserLive.New, :new
+      live "/users/:id", UserLive.Show, :show
+      live "/users/:id/edit", UserLive.Edit, :edit
     end
   end
 

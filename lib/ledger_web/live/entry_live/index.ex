@@ -46,7 +46,7 @@ defmodule LedgerWeb.EntryLive.Index do
       <.header>Buchungen</.header>
 
       <div class="entry-controls">
-        <.button phx-click="navigate" phx-value-to="/buchungen/neu">
+        <.button phx-click="navigate" phx-value-to="/entries/new">
           Neue Buchung
         </.button>
 
@@ -80,10 +80,10 @@ defmodule LedgerWeb.EntryLive.Index do
         <:col :let={entry} label="Beschreibung"><%= entry.description %></:col>
         <:col :let={entry} label="Betrag"><%= format_amount(entry.amount) %></:col>
         <:action :let={entry}>
-          <.button phx-click="navigate" phx-value-to={"/buchungen/#{entry.id}"} class="secondary">Anzeigen</.button>
+          <.button phx-click="navigate" phx-value-to={"/entries/#{entry.id}"} class="secondary">Anzeigen</.button>
         </:action>
         <:action :let={entry}>
-          <.button phx-click="navigate" phx-value-to={"/buchungen/#{entry.id}/bearbeiten"} class="secondary">
+          <.button phx-click="navigate" phx-value-to={"/entries/#{entry.id}/edit"} class="secondary">
             Bearbeiten
           </.button>
         </:action>

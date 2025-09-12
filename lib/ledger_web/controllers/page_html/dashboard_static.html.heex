@@ -1,0 +1,86 @@
+<div class="dashboard">
+  <header class="header">
+    <h1>Übersicht</h1>
+  </header>
+
+  <div class="dashboard-notice">
+    <h3 style="margin-top:0">Statische Ansicht</h3>
+    <p>
+      Dies ist eine vereinfachte statische Version des Dashboards. Einige interaktive Funktionen sind möglicherweise eingeschränkt.
+    </p>
+  </div>
+
+  <div class="dashboard-grid">
+    <section class="card">
+      <div class="card-header">
+        <h2>Kontensalden</h2>
+        <div class="card-actions">
+          <a href="/entries" class="button secondary">Alle Konten anzeigen</a>
+        </div>
+      </div>
+      <div class="card-content">
+        <div class="account-balances">
+          <%= if Enum.empty?(@account_balances) do %>
+            <p>Keine Konten vorhanden.</p>
+          <% else %>
+            <%= for account <- @account_balances do %>
+              <div class="account-balance">
+                <div class="account-name"><%= account.name %></div>
+                <div class="account-amount"><%= format_amount(account.balance) %></div>
+              </div>
+            <% end %>
+          <% end %>
+        </div>
+      </div>
+    </section>
+
+    <section class="card">
+      <div class="card-header">
+        <h2>Letzte Buchungen</h2>
+        <div class="card-actions">
+          <a href="/entries" class="button secondary">Alle Buchungen anzeigen</a>
+        </div>
+      </div>
+      <div class="card-content">
+        <div class="recent-entries">
+          <%= if Enum.empty?(@recent_entries) do %>
+            <p>Keine Buchungen vorhanden.</p>
+          <% else %>
+            <%= for entry <- @recent_entries do %>
+              <div class="recent-entry">
+                <div class="entry-date"><%= format_date(entry.date) %></div>
+                <div class="entry-description"><%= entry.description %></div>
+                <div class="entry-amount"><%= format_amount(entry.amount) %></div>
+              </div>
+            <% end %>
+          <% end %>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <section class="card">
+    <div class="card-header">
+      <h2>Schnellaktionen</h2>
+    </div>
+    <div class="card-content">
+      <div class="quick-actions">
+        <a href="/entries/new" class="button">Neue Buchung</a>
+        <a href="/entries" class="button">Vorlage anwenden</a>
+        <a href="/entries" class="button">Bericht erstellen</a>
+      </div>
+    </div>
+  </section>
+</div>
+
+<style>
+  /* Additional styles for static fallback */
+  .dashboard-notice {
+    background-color: #fff3cd;
+    border: 1px solid #ffeeba;
+    color: #856404;
+    padding: 15px;
+    margin-bottom: 20px;
+    border-radius: 4px;
+  }
+</style>

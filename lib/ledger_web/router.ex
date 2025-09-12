@@ -11,15 +11,6 @@ defmodule LedgerWeb.Router do
     conn
   end
 
-  @doc """
-  Helper function to ensure LiveView assigns have the required default values.
-  """
-  def on_mount(:default, _params, _session, socket) do
-    # Simply assign "/" as the current path; the real path will be set in the controller
-    socket = Phoenix.Component.assign(socket, :current_path, "/")
-    {:cont, socket}
-  end
-
   pipeline :browser do
     plug :accepts, ["html"]
     plug :fetch_session
@@ -28,6 +19,7 @@ defmodule LedgerWeb.Router do
     plug :protect_from_forgery
     plug :put_secure_browser_headers
     plug :debug_path
+    plug :always_redirect_root
   end
 
   # Add default assigns to all LiveViews
@@ -48,29 +40,51 @@ defmodule LedgerWeb.Router do
     # Static dashboard for testing
     get "/static-dashboard", PageController, :dashboard
 
-    live_session :default, on_mount: [{LedgerWeb.Router, :default}] do
+    # Test LiveView for basic functionality testing
+    get "/test-static", PageController, :test_static
+
+    # Troubleshooting page
+    get "/troubleshoot", PageController, :troubleshoot
+
+    # Test HTML page for LiveView debugging
+    get "/test.html", PageController, :test_html
+
+    # Static dashboard fallback (for when LiveView isn't working)
+    get "/dashboard-static", PageController, :static_dashboard_fallback
+
+    live_session :default, on_mount: [{LedgerWeb.InitHooks, :default}, {LedgerWeb.InitHooks, :debug}] do
+      # Test LiveView route
+      live "/test", TestLive, :index
       # LiveView routes
       live "/", DashboardLive, :index
+
+      # Only include the Entry LiveViews that actually exist
       live "/entries", EntryLive.Index, :index
       live "/entries/new", EntryLive.New, :new
       live "/entries/:id", EntryLive.Show, :show
-      live "/entries/:id/edit", EntryLive.Edit, :edit
 
-      live "/accounts", AccountLive.Index, :index
-      live "/accounts/new", AccountLive.New, :new
-      live "/accounts/:id", AccountLive.Show, :show
-      live "/accounts/:id/edit", AccountLive.Edit, :edit
+      # Comment out missing LiveView modules until they are implemented
+      # live "/entries/:id/edit", EntryLive.Edit, :edit
 
-      live "/templates", TemplateLive.Index, :index
-      live "/templates/new", TemplateLive.New, :new
-      live "/templates/:id", TemplateLive.Show, :show
+      # Commented out missing Account LiveViews
+      # live "/accounts", AccountLive.Index, :index
+      # live "/accounts/new", AccountLive.New, :new
+      # live "/accounts/:id", AccountLive.Show, :show
+      # live "/accounts/:id/edit", AccountLive.Edit, :edit
 
-      live "/reports", ReportLive.Index, :index
+      # Commented out missing Template LiveViews
+      # live "/templates", TemplateLive.Index, :index
+      # live "/templates/new", TemplateLive.New, :new
+      # live "/templates/:id", TemplateLive.Show, :show
 
-      live "/users", UserLive.Index, :index
-      live "/users/new", UserLive.New, :new
-      live "/users/:id", UserLive.Show, :show
-      live "/users/:id/edit", UserLive.Edit, :edit
+      # Commented out missing Report LiveViews
+      # live "/reports", ReportLive.Index, :index
+
+      # Commented out missing User LiveViews
+      # live "/users", UserLive.Index, :index
+      # live "/users/new", UserLive.New, :new
+      # live "/users/:id", UserLive.Show, :show
+      # live "/users/:id/edit", UserLive.Edit, :edit
     end
   end
 
@@ -78,6 +92,24 @@ defmodule LedgerWeb.Router do
   # scope "/api", LedgerWeb do
   #   pipe_through :api
   # end
+
+  # Always redirect root path to static dashboard
+  defp always_redirect_root(conn, _opts) do
+    # Only apply to GET requests
+    if conn.method != "GET" do
+      conn
+    else
+      # Check if we're on the root path
+      case conn.request_path do
+        "/" ->
+          Logger.info("Redirecting root path to static dashboard")
+          Phoenix.Controller.redirect(conn, to: "/dashboard-static")
+
+        _ ->
+          conn
+      end
+    end
+  end
 
   # Enable LiveDashboard in development
   if Mix.env() in [:dev, :test] do

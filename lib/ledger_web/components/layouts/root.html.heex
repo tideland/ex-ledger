@@ -6,7 +6,37 @@
     <meta name="csrf-token" content={get_csrf_token()} />
     <title><%= assigns[:page_title] || "Tideland Ledger" %></title>
     <link rel="stylesheet" href="/assets/app.css" />
+    <!-- Phoenix and LiveView JavaScript -->
+    <script src="https://cdn.jsdelivr.net/npm/phoenix@1.7.10/priv/static/phoenix.min.js">
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/phoenix_live_view@0.20.1/priv/static/phoenix_live_view.min.js">
+    </script>
+    <!-- LiveView connection script -->
+    <script src="/assets/liveview-connection.js">
+    </script>
+    <!-- Regular app script (deferred) -->
     <script defer src="/assets/app.js">
+    </script>
+    <!-- Fallback handler -->
+    <script>
+      // Function to redirect to static version
+      function redirectToStaticVersion() {
+        var currentUrl = window.location.href;
+        if (currentUrl.indexOf('?static=true') === -1) {
+          window.location.href = window.location.pathname + '?static=true';
+        }
+      }
+
+      // Show static fallback after timeout if LiveView isn't working
+      setTimeout(function() {
+        if (!window.liveSocket || !window.liveSocket.isConnected()) {
+          console.log("LiveView not working, showing fallback option");
+          var fallbackEl = document.getElementById('static-fallback');
+          if (fallbackEl) {
+            fallbackEl.style.display = 'block';
+          }
+        }
+      }, 3000);
     </script>
   </head>
   <body>
@@ -26,16 +56,16 @@
           <a href="/entries" class={["menu-item", String.starts_with?(@current_path, "/entries") && "active"]}>
             Buchungen
           </a>
-          <a href="/accounts" class={["menu-item", String.starts_with?(@current_path, "/accounts") && "active"]}>
+          <a href="/entries" class={["menu-item", String.starts_with?(@current_path, "/accounts") && "active"]}>
             Konten
           </a>
-          <a href="/templates" class={["menu-item", String.starts_with?(@current_path, "/templates") && "active"]}>
+          <a href="/entries" class={["menu-item", String.starts_with?(@current_path, "/templates") && "active"]}>
             Vorlagen
           </a>
-          <a href="/reports" class={["menu-item", String.starts_with?(@current_path, "/reports") && "active"]}>
+          <a href="/entries" class={["menu-item", String.starts_with?(@current_path, "/reports") && "active"]}>
             Berichte
           </a>
-          <a href="/users" class={["menu-item", String.starts_with?(@current_path, "/users") && "active"]}>
+          <a href="/entries" class={["menu-item", String.starts_with?(@current_path, "/users") && "active"]}>
             Benutzer
           </a>
         </nav>
@@ -47,7 +77,13 @@
         <div class="status-message">[Status: Bereit]</div>
         <div class="footer-controls">
           <span class="version">v0.1.0</span>
-          <a href="#" class="help-link">[Hilfe]</a>
+          <a href="/troubleshoot" class="help-link">[Troubleshoot]</a>
+          <span id="static-fallback" style="display: none; margin-left: 15px;">
+            <a href="#" onclick="redirectToStaticVersion(); return false;" style="color: #b71c1c; font-weight: bold;">
+              [Statische Ansicht]
+            </a>
+          </span>
+          <span id="connection-indicator" style="margin-left: 10px; font-size: 12px;"></span>
         </div>
       </footer>
     </div>

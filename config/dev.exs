@@ -28,14 +28,7 @@ config :tideland_ledger, LedgerWeb.Endpoint,
 # The watchers configuration can be used to run external
 # watchers to your application. For example, we can use it
 # to bundle .js and .css sources.
-config :tideland_ledger, TidelandLedgerWeb.Endpoint,
-  # Binding to loopback ipv4 address prevents access from other machines.
-  # Change to `ip: {0, 0, 0, 0}` to allow access from other machines.
-  http: [ip: {127, 0, 0, 1}, port: 4000],
-  check_origin: false,
-  code_reloader: true,
-  debug_errors: true,
-  secret_key_base: "bqZzUD/KcB2rR0aST6YpLlDz8vJFqV9CyNBhJl+D0r1M9gH8L4TvmYRYcKq9I2D3",
+config :tideland_ledger, LedgerWeb.Endpoint,
   watchers: [
     esbuild: {Esbuild, :install_and_run, [:default, ~w(--sourcemap=inline --watch)]},
     tailwind: {Tailwind, :install_and_run, [:default, ~w(--watch)]}
@@ -65,7 +58,7 @@ config :tideland_ledger, TidelandLedgerWeb.Endpoint,
 # different ports.
 
 # Watch static and templates for browser reloading.
-config :tideland_ledger, TidelandLedgerWeb.Endpoint,
+config :tideland_ledger, LedgerWeb.Endpoint,
   live_reload: [
     patterns: [
       ~r"priv/static/.*(js|css|png|jpeg|jpg|gif|svg)$",

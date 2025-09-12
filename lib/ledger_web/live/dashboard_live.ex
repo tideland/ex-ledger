@@ -6,6 +6,7 @@ defmodule LedgerWeb.DashboardLive do
   of account balances and recent entries.
   """
   use LedgerWeb, :live_view
+  import LedgerWeb.LiveHelpers, only: [format_amount: 1, format_date: 1]
 
   # These aliases will be used when connected to real data
   # alias Ledger.Accounts
@@ -18,8 +19,7 @@ defmodule LedgerWeb.DashboardLive do
 
     socket =
       socket
-      |> assign(:page_title, "Übersicht")
-      |> assign(:current_path, "/")
+      |> LedgerWeb.InitHooks.init_socket(page_title: "Übersicht", current_path: "/")
       |> assign(:account_balances, fetch_account_balances())
       |> assign(:recent_entries, fetch_recent_entries())
 
@@ -39,7 +39,14 @@ defmodule LedgerWeb.DashboardLive do
       <div class="dashboard-grid">
         <.card title="Kontensalden">
           <:actions>
-            <.button phx-click="navigate" phx-value-to="/accounts" class="secondary">Alle Konten anzeigen</.button>
+            <.button
+              phx-click="navigate"
+              phx-value-to="/accounts"
+              class="secondary"
+              onclick="window.location.href='/accounts'; return false;"
+            >
+              Alle Konten anzeigen
+            </.button>
           </:actions>
 
           <div class="account-balances">
@@ -58,7 +65,14 @@ defmodule LedgerWeb.DashboardLive do
 
         <.card title="Letzte Buchungen">
           <:actions>
-            <.button phx-click="navigate" phx-value-to="/entries" class="secondary">Alle Buchungen anzeigen</.button>
+            <.button
+              phx-click="navigate"
+              phx-value-to="/entries"
+              class="secondary"
+              onclick="window.location.href='/entries'; return false;"
+            >
+              Alle Buchungen anzeigen
+            </.button>
           </:actions>
 
           <div class="recent-entries">
@@ -66,7 +80,12 @@ defmodule LedgerWeb.DashboardLive do
               <p>Keine Buchungen vorhanden.</p>
             <% else %>
               <%= for entry <- @recent_entries do %>
-                <div class="recent-entry" phx-click="view-entry" phx-value-id={entry.id}>
+                <div
+                  class="recent-entry"
+                  phx-click="navigate"
+                  phx-value-to={"/entries/#{entry.id}"}
+                  onclick={"window.location.href='/entries/#{entry.id}'; return false;"}
+                >
                   <div class="entry-date"><%= format_date(entry.date) %></div>
                   <div class="entry-description"><%= entry.description %></div>
                   <div class="entry-amount"><%= format_amount(entry.amount) %></div>
@@ -79,9 +98,19 @@ defmodule LedgerWeb.DashboardLive do
 
       <.card title="Schnellaktionen">
         <div class="quick-actions">
-          <.button phx-click="navigate" phx-value-to="/entries/new">Neue Buchung</.button>
-          <.button phx-click="navigate" phx-value-to="/templates">Vorlage anwenden</.button>
-          <.button phx-click="navigate" phx-value-to="/reports">Bericht erstellen</.button>
+          <.button
+            phx-click="navigate"
+            phx-value-to="/entries/new"
+            onclick="window.location.href='/entries/new'; return false;"
+          >
+            Neue Buchung
+          </.button>
+          <.button phx-click="navigate" phx-value-to="/entries" onclick="window.location.href='/entries'; return false;">
+            Vorlage anwenden
+          </.button>
+          <.button phx-click="navigate" phx-value-to="/entries" onclick="window.location.href='/entries'; return false;">
+            Bericht erstellen
+          </.button>
         </div>
       </.card>
     </div>
@@ -124,5 +153,5 @@ defmodule LedgerWeb.DashboardLive do
     ]
   end
 
-  # Helper functions for this LiveView are now in LiveHelpers
+  # Helper functions have been imported from LiveHelpers
 end

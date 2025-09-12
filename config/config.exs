@@ -9,12 +9,13 @@ import Config
 
 config :tideland_ledger,
   ecto_repos: [TidelandLedger.Repo],
-  generators: [timestamp_type: :utc_datetime]
+  generators: [timestamp_type: :utc_datetime],
+  app_name: "Tideland Ledger"
 
-# Configures our new endpoint
+# Configures our Ledger endpoint
 config :tideland_ledger, LedgerWeb.Endpoint,
   url: [host: "localhost"],
-  http: [ip: {127, 0, 0, 1}, port: 4000],
+  http: [ip: {127, 0, 0, 1}, port: 4002],
   render_errors: [
     formats: [html: LedgerWeb.ErrorHTML, json: LedgerWeb.ErrorJSON],
     layout: false
@@ -23,15 +24,15 @@ config :tideland_ledger, LedgerWeb.Endpoint,
   live_view: [signing_salt: "zQxN3Kl9"],
   secret_key_base: "bqZzUD/KcB2rR0aST6YpLlDz8vJFqV9CyNBhJl+D0r1M9gH8L4TvmYRYcKq9I2D3"
 
-# Configures the endpoint
-config :tideland_ledger, TidelandLedgerWeb.Endpoint,
-  url: [host: "localhost"],
-  render_errors: [
-    formats: [html: TidelandLedgerWeb.ErrorHTML, json: TidelandLedgerWeb.ErrorJSON],
-    layout: false
-  ],
-  pubsub_server: TidelandLedger.PubSub,
-  live_view: [signing_salt: "zQxN3Kl9"]
+# This configuration is no longer needed as we're using LedgerWeb.Endpoint
+# config :tideland_ledger, TidelandLedgerWeb.Endpoint,
+#  url: [host: "localhost"],
+#  render_errors: [
+#    formats: [html: TidelandLedgerWeb.ErrorHTML, json: TidelandLedgerWeb.ErrorJSON],
+#    layout: false
+#  ],
+#  pubsub_server: TidelandLedger.PubSub,
+#  live_view: [signing_salt: "zQxN3Kl9"]
 
 # Mailer configuration disabled for now - no email functionality implemented yet
 # config :tideland_ledger, TidelandLedger.Mailer, adapter: Swoosh.Adapters.Local

@@ -29,6 +29,37 @@ defmodule TidelandLedger.AmountTest do
       assert amount.cents == 10000
       assert amount.currency == "USD"
     end
+
+    test "creates equivalent amounts from different input types" do
+      decimal = Decimal.new("123.45")
+
+      # Test with Decimal directly
+      amount1 = Amount.new(decimal)
+
+      # Test with Float conversion via Decimal.from_float
+      float_value = Decimal.to_float(decimal)
+      amount2 = Amount.new(Decimal.from_float(float_value))
+
+      # Test with direct integer (12345 cents = 123.45)
+      amount3 = Amount.new(12345)
+
+      # Test conversion functions
+      to_amount_via_float = fn d ->
+        decimal_value = Decimal.to_float(d)
+        Amount.new(Decimal.from_float(decimal_value))
+      end
+      amount4 = to_amount_via_float.(decimal)
+
+      to_amount_direct = fn d -> Amount.new(d) end
+      amount5 = to_amount_direct.(decimal)
+
+      # All amounts should be equal
+      assert amount1.cents == amount2.cents
+      assert amount2.cents == amount3.cents
+      assert amount3.cents == amount4.cents
+      assert amount4.cents == amount5.cents
+      assert amount1.cents == 12345
+    end
   end
 
   describe "from_cents/2" do

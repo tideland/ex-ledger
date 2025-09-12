@@ -30,6 +30,28 @@ This document describes the web user interface design for the Tideland Ledger ap
 - **Error Prevention**: Validate input before submission
 - **Undo Support**: Where appropriate (e.g., deleting positions)
 
+### 2.4 URL Naming Conventions
+
+- **English Only**: All URL paths and parameters must be in English
+- **Lowercase**: URLs use lowercase letters exclusively
+- **Dash-Separated**: CamelCase converts to dash-separated format
+- **Descriptive Verbs**: Operations use clear English action words
+- **RESTful Patterns**: Follow standard REST conventions where applicable
+
+**URL Pattern Examples**:
+
+- `/dashboard` - Main overview page
+- `/entries` - Entry listing
+- `/entries/new` - Create new entry
+- `/entries/:id/edit` - Edit specific entry
+- `/accounts` - Account listing
+- `/accounts/:id` - Account detail view
+- `/templates` - Template listing
+- `/templates/new` - Create new template
+- `/templates/:id/create-version` - Create new template version
+- `/reports/trial-balance` - Trial balance report
+- `/users` - User management (admin only)
+
 ## 3. Application Layout
 
 ### 3.1 Base Layout Structure
@@ -610,17 +632,35 @@ end
 
 ### 7.1 Main Navigation Paths
 
-1. **Dashboard** → Quick access to all major functions
-2. **Entries** → List → New/Edit → Save → Back to list
-3. **Accounts** → List → Detail → Edit → Save
-4. **Templates** → List → New/Edit → Apply in entry form
-5. **Reports** → Select type → Configure → Generate → Export
+1. **Dashboard** (`/dashboard`) → Quick access to all major functions
+2. **Entries** (`/entries`) → List → New (`/entries/new`) / Edit (`/entries/:id/edit`) → Save → Back to list
+3. **Accounts** (`/accounts`) → List → Detail (`/accounts/:id`) → Edit (`/accounts/:id/edit`) → Save
+4. **Templates** (`/templates`) → List → New (`/templates/new`) / Create Version (`/templates/:id/create-version`) → Apply in entry form
+5. **Reports** (`/reports`) → Select type → Configure → Generate → Export
 
-### 7.2 Keyboard Shortcuts
+### 7.2 URL Structure and RESTful Patterns
 
-- `Alt+N` - Neue Buchung (New entry)
-- `Alt+K` - Konten (Accounts)
-- `Alt+B` - Berichte (Reports)
+**Resource-Based URLs**:
+
+- `GET /entries` - List all entries
+- `GET /entries/new` - Show entry creation form
+- `POST /entries` - Create new entry
+- `GET /entries/:id` - Show specific entry
+- `GET /entries/:id/edit` - Show entry edit form
+- `PUT /entries/:id` - Update specific entry
+- `DELETE /entries/:id` - Void/delete entry
+
+**Nested Resources**:
+
+- `GET /templates/:id/create-version` - Create new version of template
+- `POST /templates/:id/versions` - Save new template version
+- `GET /accounts/:id/entries` - Show entries for specific account
+
+### 7.3 Keyboard Shortcuts
+
+- `Alt+N` - Neue Buchung (New entry) - navigates to `/entries/new`
+- `Alt+K` - Konten (Accounts) - navigates to `/accounts`
+- `Alt+B` - Berichte (Reports) - navigates to `/reports`
 - `Tab` - Navigate between fields
 - `Enter` - Submit form (when valid)
 - `Esc` - Cancel/close dialog

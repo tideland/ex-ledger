@@ -313,6 +313,30 @@ For detailed implementation guidance, refer to these companion documents:
 
 **Rationale**: Vertical menus work better with unknown page widths and provide room for German text. Flat navigation reduces cognitive load.
 
+### REQ-04-04: URL Structure and Naming
+
+**Requirement**: Consistent, English-based URL structure for the web interface.
+
+**Constraints**:
+
+- All URL paths and parameters must be in English
+- Use lowercase letters only
+- Convert CamelCase object names to dash-separated format
+- Follow RESTful conventions where applicable
+- Operations should use descriptive English verbs
+
+**Solution**: Standardized URL patterns following REST conventions
+
+**Examples**:
+
+- `/dashboard` - Main overview (not `/uebersicht`)
+- `/entries/new` - Create entry (not `/buchungen/neu`)
+- `/accounts/:id/edit` - Edit account (not `/konten/:id/bearbeiten`)
+- `/templates/:id/create-version` - Create template version
+- `/reports/trial-balance` - Trial balance report
+
+**Rationale**: English URLs provide consistency with web standards and make the application more accessible to developers. They separate technical routing from user-facing German text, enabling easier maintenance and potential future internationalization.
+
 ## 7. Data Entry Requirements
 
 ### REQ-05-01: Entry Creation

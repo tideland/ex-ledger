@@ -90,7 +90,21 @@ The Tideland Ledger is a web-based simplified ledger-style bookkeeping system im
 - Keyboard shortcuts for power users
 - Form validation and error handling
 
-### 4.2 Key UI Components
+### 4.2 URL Structure Requirements
+
+- All URL paths and parameters must be in English
+- URLs must use lowercase letters only
+- CamelCase object names must be converted to dash-separated format
+- Example: `AccountTemplate` becomes `/account-templates`
+- URL parameters follow the same naming conventions
+- Operations should use descriptive English verbs
+- Example routes:
+  - `/dashboard` (not `/uebersicht`)
+  - `/entries/new` (not `/buchungen/neu`)
+  - `/accounts/123/edit` (not `/konten/123/bearbeiten`)
+  - `/templates/create-version` (not `/vorlagen/version-erstellen`)
+
+### 4.3 Key UI Components
 
 - Dashboard with account overview
 - Entry forms

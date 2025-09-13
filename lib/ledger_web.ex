@@ -37,10 +37,9 @@ defmodule TidelandLedgerWeb do
     quote do
       use Phoenix.Controller,
         formats: [:html, :json],
-        layouts: [html: TidelandLedgerWeb.Layouts]
+        layouts: [html: LedgerWeb.Layouts]
 
       import Plug.Conn
-      import TidelandLedgerWeb.Gettext
 
       unquote(verified_routes())
     end
@@ -49,7 +48,7 @@ defmodule TidelandLedgerWeb do
   def live_view do
     quote do
       use Phoenix.LiveView,
-        layout: {TidelandLedgerWeb.Layouts, :app}
+        layout: {LedgerWeb.Layouts, :app}
 
       unquote(html_helpers())
     end
@@ -80,9 +79,6 @@ defmodule TidelandLedgerWeb do
     quote do
       # HTML escaping functionality
       import Phoenix.HTML
-      # Core UI components and translation
-      import TidelandLedgerWeb.CoreComponents
-      import TidelandLedgerWeb.Gettext
 
       # Shortcut for generating JS commands
       alias Phoenix.LiveView.JS
@@ -95,9 +91,9 @@ defmodule TidelandLedgerWeb do
   def verified_routes do
     quote do
       use Phoenix.VerifiedRoutes,
-        endpoint: TidelandLedgerWeb.Endpoint,
-        router: TidelandLedgerWeb.Router,
-        statics: TidelandLedgerWeb.static_paths()
+        endpoint: LedgerWeb.Endpoint,
+        router: LedgerWeb.Router,
+        statics: LedgerWeb.static_paths()
     end
   end
 

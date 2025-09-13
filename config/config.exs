@@ -12,14 +12,16 @@ config :tideland_ledger,
   generators: [timestamp_type: :utc_datetime]
 
 # Configures the endpoint
-config :tideland_ledger, TidelandLedgerWeb.Endpoint,
+config :tideland_ledger, LedgerWeb.Endpoint,
   url: [host: "localhost"],
+  adapter: Phoenix.Endpoint.Cowboy2Adapter,
   render_errors: [
-    formats: [html: TidelandLedgerWeb.ErrorHTML, json: TidelandLedgerWeb.ErrorJSON],
+    formats: [html: LedgerWeb.ErrorHTML, json: LedgerWeb.ErrorJSON],
     layout: false
   ],
   pubsub_server: TidelandLedger.PubSub,
-  live_view: [signing_salt: "zQxN3Kl9"]
+  live_view: [signing_salt: "zQxN3Kl9"],
+  secret_key_base: "DEVELOPMENT_SECRET_KEY_BASE_CHANGE_IN_PRODUCTION_1234567890ABCDEF"
 
 # Mailer configuration disabled for now - no email functionality implemented yet
 # config :tideland_ledger, TidelandLedger.Mailer, adapter: Swoosh.Adapters.Local

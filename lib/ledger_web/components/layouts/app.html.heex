@@ -1,0 +1,17 @@
+<div class="min-h-screen bg-white">
+  <main class="px-4 py-10 sm:px-6 lg:px-8">
+    <div class="mx-auto max-w-2xl">
+      <%= if Phoenix.Flash.get(@flash, :info) do %>
+        <div class="alert alert-info">
+          <%= Phoenix.Flash.get(@flash, :info) %>
+        </div>
+      <% end %>
+      <%= if Phoenix.Flash.get(@flash, :error) do %>
+        <div class="alert alert-error">
+          <%= Phoenix.Flash.get(@flash, :error) %>
+        </div>
+      <% end %>
+      <%= @inner_content %>
+    </div>
+  </main>
+</div>

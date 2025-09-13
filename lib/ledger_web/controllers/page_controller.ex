@@ -1,7 +1,12 @@
 defmodule LedgerWeb.PageController do
-  use Phoenix.Controller, formats: [:html, :json]
+  use Phoenix.Controller,
+    formats: [:html, :json],
+    layouts: [html: LedgerWeb.Layouts]
 
   def home(conn, _params) do
-    render(conn, :home, layout: false)
+    conn
+    |> assign(:active_menu, :dashboard)
+    |> assign(:page_title, "Übersicht")
+    |> render(:home, layout: {LedgerWeb.Layouts, :app})
   end
 end

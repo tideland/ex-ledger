@@ -1,53 +1,161 @@
-<!DOCTYPE html>
-<html lang="de">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Tideland Ledger</title>
-    <style>
-      body {
-        font-family: system-ui, -apple-system, sans-serif;
-        margin: 2rem;
-        background: #fff;
-        color: #333;
-      }
-      .container {
-        max-width: 800px;
-        margin: 0 auto;
-        padding: 2rem;
-        border: 1px solid #ccc;
-      }
-      h1 { color: #1a1a1a; }
-      .status {
-        background: #f0f0f0;
-        padding: 1rem;
-        border-radius: 4px;
-        margin: 1rem 0;
-      }
-    </style>
-  </head>
-  <body>
-    <div class="container">
-      <h1>Tideland Ledger</h1>
-      <p>Phoenix Web UI ist bereit!</p>
+<div class="dashboard-content">
+  <div class="status-section">
+    <h3>Phase W2: Core UI Components & Layouts</h3>
+    <p><strong>Status:</strong> Implementiert und bereit für Tests</p>
 
-      <div class="status">
-        <h3>System Status</h3>
-        <ul>
-          <li>✅ Phoenix Endpoint aktiv</li>
-          <li>✅ Router konfiguriert</li>
-          <li>✅ LiveView Socket bereit</li>
-          <li>✅ Session Management verfügbar</li>
-        </ul>
-      </div>
-
-      <p>
-        <strong>Phase W1:</strong> Core Phoenix Infrastructure - Erfolgreich implementiert!
-      </p>
-
-      <p>
-        <em>Nächste Schritte:</em> Layouts, Navigation und UI-Komponenten (Phase W2)
-      </p>
+    <div class="feature-list">
+      <h4>Implementierte Features:</h4>
+      <ul>
+        <li>✅ Terminal-Style CSS Design</li>
+        <li>✅ Responsive Grid-Layout</li>
+        <li>✅ Vertikale Navigation (Desktop)</li>
+        <li>✅ Horizontale Navigation (Mobile)</li>
+        <li>✅ Flash-Nachrichten System</li>
+        <li>✅ Basis-Formulare und Buttons</li>
+        <li>✅ Deutsche Benutzeroberfläche</li>
+      </ul>
     </div>
-  </body>
-</html>
+  </div>
+
+  <div class="component-showcase">
+    <h3>UI-Komponenten Demo</h3>
+    <!-- Flash Messages Demo -->
+    <div class="demo-section">
+      <h4>Flash-Nachrichten:</h4>
+      <div class="flash flash-info">
+        <div class="flash-content">
+          <strong>Info:</strong> Dies ist eine Informationsnachricht.
+        </div>
+      </div>
+      <div class="flash flash-error">
+        <div class="flash-content">
+          <strong>Fehler:</strong> Dies ist eine Fehlermeldung.
+        </div>
+      </div>
+    </div>
+    <!-- Button Demo -->
+    <div class="demo-section">
+      <h4>Buttons:</h4>
+      <button class="btn">Standard Button</button>
+      <button class="btn btn-primary">Primary Button</button>
+      <button class="btn btn-danger">Danger Button</button>
+    </div>
+    <!-- Form Demo -->
+    <div class="demo-section">
+      <h4>Formular-Elemente:</h4>
+      <div class="field">
+        <label for="demo-input">Beispiel-Eingabe:</label>
+        <input type="text" id="demo-input" placeholder="Terminal-Style Input" />
+      </div>
+      <div class="field">
+        <label for="demo-select">Auswahl:</label>
+        <select id="demo-select">
+          <option>Option 1</option>
+          <option>Option 2</option>
+        </select>
+      </div>
+    </div>
+    <!-- Table Demo -->
+    <div class="demo-section">
+      <h4>Tabelle:</h4>
+      <table>
+        <thead>
+          <tr>
+            <th>Konto</th>
+            <th>Typ</th>
+            <th class="text-right">Betrag</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="account-path">Vermögen : Bank : Girokonto</td>
+            <td>Asset</td>
+            <td class="amount positive">1.250,00 €</td>
+          </tr>
+          <tr>
+            <td class="account-path">Ausgaben : Miete</td>
+            <td>Expense</td>
+            <td class="amount negative">-850,00 €</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="test-instructions">
+    <h3>Test-Anweisungen für Phase W2:</h3>
+    <ol>
+      <li><strong>Desktop-Layout:</strong> Navigation sollte vertikal links sein</li>
+      <li><strong>Mobile-Layout:</strong> Browserfenster auf &lt; 768px verkleinern → Navigation wird horizontal</li>
+      <li><strong>Menü-Interaktion:</strong> Hover-Effekte auf Menüpunkten testen</li>
+      <li><strong>Responsive Design:</strong> Layout passt sich an verschiedene Bildschirmgrößen an</li>
+      <li><strong>Terminal-Style:</strong> Monospace-Schrift und flaches Design</li>
+      <li><strong>Keyboard Navigation:</strong> Tab-Taste sollte durch Elemente navigieren</li>
+    </ol>
+  </div>
+
+  <div class="next-phase">
+    <p><strong>Nächste Phase:</strong> W3 - Authentication Web Layer</p>
+    <p><em>Dann folgt:</em> Login/Logout, Benutzerrollen, Session Management</p>
+  </div>
+</div>
+
+<style>
+  .dashboard-content h2 {
+    border-bottom: 1px solid var(--border-color);
+    padding-bottom: 0.5rem;
+    margin-bottom: 1rem;
+  }
+
+  .status-section {
+    background: #f8f8f8;
+    padding: 1rem;
+    margin: 1rem 0;
+    border: 1px solid var(--border-color);
+  }
+
+  .feature-list ul {
+    margin: 0.5rem 0;
+    padding-left: 1.5rem;
+  }
+
+  .component-showcase {
+    margin: 2rem 0;
+  }
+
+  .demo-section {
+    margin: 1.5rem 0;
+    padding: 1rem;
+    border: 1px solid var(--border-color);
+  }
+
+  .demo-section h4 {
+    margin-top: 0;
+    margin-bottom: 1rem;
+    color: var(--primary-color);
+  }
+
+  .demo-section .btn {
+    margin-right: 0.5rem;
+    margin-bottom: 0.5rem;
+  }
+
+  .test-instructions {
+    background: #ffffcc;
+    padding: 1rem;
+    margin: 2rem 0;
+    border: 1px solid #cccc00;
+  }
+
+  .test-instructions ol {
+    margin: 0.5rem 0;
+    padding-left: 1.5rem;
+  }
+
+  .next-phase {
+    text-align: center;
+    padding: 1rem;
+    margin: 2rem 0;
+    border: 2px solid var(--primary-color);
+  }
+</style>

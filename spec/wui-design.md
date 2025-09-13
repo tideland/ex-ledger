@@ -20,8 +20,12 @@ This document describes the web user interface design for the Tideland Ledger ap
 - **Flat Design**: No gradients, shadows, or 3D effects
 - **High Contrast**: Clear text on contrasting backgrounds
 - **Consistent Spacing**: Use CSS Grid or Flexbox for layout
-- **Minimal Colors**: Primary color for actions, neutral grays for structure
-- **Clear Typography**: System fonts, readable sizes
+- **Color Scheme**:
+  - Content area: White background with dark text
+  - Outer elements: Bluish background (#2c4866) with white text
+  - Headers, navigation, footer use coordinated blue theme
+- **Clear Typography**: Monospace fonts for terminal aesthetic
+- **Professional Appearance**: Clean, functional interface design
 
 ### 2.3 Interaction Patterns
 
@@ -89,14 +93,21 @@ This document describes the web user interface design for the Tideland Ledger ap
 ### 3.3 CSS Structure
 
 ```css
-/* Minimal CSS - stored in priv/static/css/app.css */
+/* Terminal-style CSS with bluish outer elements - stored in priv/static/css/app.css */
 :root {
   --primary-color: #1a1a1a;
   --background-color: #ffffff;
+  --header-bg-color: #2c4866;
+  --menu-bg-color: #2c4866;
+  --footer-bg-color: #2c4866;
+  --header-text-color: #ffffff;
+  --menu-text-color: #ffffff;
+  --footer-text-color: #ffffff;
   --border-color: #cccccc;
+  --border-light-color: #4a6888;
   --error-color: #cc0000;
   --success-color: #008800;
-  --font-family: system-ui, -apple-system, sans-serif;
+  --font-family: "Monaco", "Menlo", "Consolas", "Courier New", monospace;
 }
 
 /* Simple grid-based layout with vertical menu */

@@ -1,17 +1,61 @@
-<div class="min-h-screen bg-white">
-  <main class="px-4 py-10 sm:px-6 lg:px-8">
-    <div class="mx-auto max-w-2xl">
-      <%= if Phoenix.Flash.get(@flash, :info) do %>
-        <div class="alert alert-info">
-          <%= Phoenix.Flash.get(@flash, :info) %>
-        </div>
-      <% end %>
-      <%= if Phoenix.Flash.get(@flash, :error) do %>
-        <div class="alert alert-error">
-          <%= Phoenix.Flash.get(@flash, :error) %>
-        </div>
-      <% end %>
-      <%= @inner_content %>
+<div class="container">
+  <header class="header">
+    <div class="header-left">
+      <h1>Tideland Ledger</h1>
     </div>
+    <div class="header-right">
+      <%= if assigns[:current_user] do %>
+        <span class="user-info"><%= @current_user.name %></span>
+        <a href="/logout" class="logout-link">Abmelden</a>
+      <% else %>
+        <a href="/login" class="login-link">Anmelden</a>
+      <% end %>
+    </div>
+  </header>
+
+  <nav class="menu">
+    <a href="/dashboard" class={["menu-item", @active_menu == :dashboard && "active"]}>
+      Übersicht
+    </a>
+    <a href="/entries" class={["menu-item", @active_menu == :entries && "active"]}>
+      Buchungen
+    </a>
+    <a href="/accounts" class={["menu-item", @active_menu == :accounts && "active"]}>
+      Konten
+    </a>
+    <a href="/templates" class={["menu-item", @active_menu == :templates && "active"]}>
+      Vorlagen
+    </a>
+    <a href="/reports" class={["menu-item", @active_menu == :reports && "active"]}>
+      Berichte
+    </a>
+    <%= if assigns[:current_user] && @current_user.role == :admin do %>
+      <a href="/users" class={["menu-item", @active_menu == :users && "active"]}>
+        Benutzer
+      </a>
+    <% end %>
+  </nav>
+
+  <main class="content">
+    <%= if Phoenix.Flash.get(@flash, :info) do %>
+      <div class="flash flash-info">
+        <div class="flash-content">
+          <strong>Info:</strong> <%= Phoenix.Flash.get(@flash, :info) %>
+        </div>
+      </div>
+    <% end %>
+    <%= if Phoenix.Flash.get(@flash, :error) do %>
+      <div class="flash flash-error">
+        <div class="flash-content">
+          <strong>Fehler:</strong> <%= Phoenix.Flash.get(@flash, :error) %>
+        </div>
+      </div>
+    <% end %>
+    <%= @inner_content %>
   </main>
+
+  <footer class="status">
+    <span>Status: Bereit</span>
+    <span class="version">v0.1.0</span>
+  </footer>
 </div>
